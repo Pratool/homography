@@ -57,7 +57,7 @@ def plot2dvec(vector):
 def plot3dvecs(vectors):
     """
 
-    :param vectors: three-element, column-vector 
+    :param vectors: three-element, column-vector
 
     """
     fig = plt.figure()
