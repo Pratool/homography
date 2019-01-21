@@ -16,7 +16,7 @@ sns.set(
 
 def main():
     """ """
-    im = mpimg.imread("t2.png")
+    im = mpimg.imread("./media/t2.png")
     im0 = im[:,:,0]
     #im_shape = im0.shape
     #im0 = im0.ravel()
