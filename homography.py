@@ -1,71 +1,64 @@
 #!/usr/bin/env python3
 from mpl_toolkits.mplot3d import Axes3D
+from rasterization import Rasterizer
 from transformation import multiply
 from transformation import TransformGenerator
 import math
+import matplotlib
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 import numpy as np
 import random
-import seaborn as sns
 import sys
-
-sns.set(
-    context="paper",
-    font_scale=1.3,
-    font="serif",
-    palette="bright",
-    style="whitegrid"
-)
 
 def main():
     """ """
-    if len(sys.argv) == 2:
-        image_path = sys.argv[1]
+    if len(sys.argv) == 3:
+        input_image_path = sys.argv[1]
+        output_image_path = sys.argv[2]
     else:
-        image_path = "./media/t2.png"
+        input_image_path = "./media/t2.png"
+        output_image_path = "output.png"
+    reverse_transformation(input_image_path, output_image_path)
 
-    im = mpimg.imread(image_path)
+def reverse_transformation(input_image_path, output_image_path):
+    im = mpimg.imread(input_image_path)
+
+    transform = TransformGenerator(
+        theta = 8.8*math.pi/180.0,
+        scale = 1.0
+    )
+
+    image_rasterization = Rasterizer(im, transformation = transform)
+
+    matplotlib.image.imsave(output_image_path, image_rasterization.rasterize())
+
+def forward_transformation(input_image_path, output_image_path):
+    im = mpimg.imread(input_image_path)
     im0 = im[:,:,0]
-    #im_shape = im0.shape
-    #im0 = im0.ravel()
 
     transform = TransformGenerator(
         theta = math.pi/3.0,
         transposition = np.asarray(
                             [math.sqrt(68)/2, math.sqrt(68)/2]
                         ).reshape(2,1),
-        scale = 2.0
+        scale = 1.0
     )
 
     transform_matrix = transform.build_matrix()
-    tmp_im = np.array([[0, 0]])
 
-    # NOTE: loop is extremely slow because adding to canvas on each iteration
-    for j in range(111, 211):
-        for i in range(420, 450):
+    output_image = np.zeros(shape=(1000,1000,3))
+    for i in range(0, im0.shape[0]):
+        for j in range(0, im0.shape[1]):
             vec = np.array([i,j]).reshape(2,1)
             transformed_vec = multiply(vec, transform_matrix)
-            tmp_im = np.vstack((tmp_im, transformed_vec.reshape(1,2)))
+            x = math.floor(transformed_vec[0]+0.5)
+            y = math.floor(transformed_vec[1]+0.5)
+            output_image[x][y][0] = im[i][j][0]
+            output_image[x][y][1] = im[i][j][1]
+            output_image[x][y][2] = im[i][j][2]
 
-            # for each transformed point, colorize marker according to
-            # original image
-            plt.scatter(
-                transformed_vec[0], transformed_vec[1],
-                marker='o', s=5**2,
-                color=(im[i][j][0], im[i][j][1], im[i][j][2])
-            )
-
-    # quick way to determine the shape of transformed image
-    #plt.scatter(tmp_im[1:,0], tmp_im[1:,1], marker='o', s=5**2, color='black')
-
-    # show all color layers
-    plt.imshow(im[:,:,0])
-    plt.imshow(im[:,:,1])
-    plt.imshow(im[:,:,2])
-    #plt.imshow(im0.reshape(im_shape))
-
-    plt.show()
+    matplotlib.image.imsave(output_image_path, output_image)
 
 def plot2dvec(vec):
     """
