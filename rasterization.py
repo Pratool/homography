@@ -37,7 +37,11 @@ class Rasterizer:
                 vec = np.array([i,j]).reshape(2,1)
                 vec_in_original = multiply(vec, transform_matrix)
 
-                if vec_in_original[0]+1 >= original_max_x or vec_in_original[1]+1 >= original_max_y:
+                vec_in_original[0] %= original_max_x
+                vec_in_original[1] %= original_max_y
+                if vec_in_original[0]+1 > original_max_x or vec_in_original[1]+1 > original_max_y:
+                    continue
+                if vec_in_original[0]-1 < 0 or vec_in_original[1]-1 < 0:
                     continue
 
                 h = math.floor(vec_in_original[0])

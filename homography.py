@@ -13,20 +13,86 @@ import sys
 
 def main():
     """ """
-    if len(sys.argv) == 3:
+    if len(sys.argv) == 4:
         input_image_path = sys.argv[1]
         output_image_path = sys.argv[2]
+        rotation = float(sys.argv[3])/10.0
     else:
         input_image_path = "./media/t2.png"
         output_image_path = "output.png"
-    reverse_transformation(input_image_path, output_image_path)
+        rotation = 4.5
+    #reverse_transformation(input_image_path, output_image_path, rotation)
+    homography_matrix(
+        input_image_path,
+        output_image_path,
+        [
+            (
+                (196, 57),
+                (0, 0),
+            ),
+            (
+                (802, 86),
+                (40, 0),
+            ),
+            (
+                (33, 446),
+                (0, 20)
+            ),
+            (
+                (739, 524),
+                (40, 20)
+            )
+        ]
+    )
 
-def reverse_transformation(input_image_path, output_image_path):
+def homography_matrix(input_image_path, output_image_path,
+                      corresponding_points):
+    equation_matrix = []
+    for point_pair in corresponding_points:
+        original_point, transformed_point = point_pair
+        equation_matrix.append([
+            -1.*original_point[0],
+            -1.*original_point[1],
+            -1.,
+            0.,
+            0.,
+            0.,
+            original_point[0]*transformed_point[0],
+            original_point[1]*transformed_point[0],
+            transformed_point[0]
+        ])
+        equation_matrix.append([
+            0.,
+            0.,
+            0.,
+            -1.*original_point[0],
+            -1.*original_point[1],
+            -1.,
+            original_point[0]*transformed_point[1],
+            original_point[1]*transformed_point[1],
+            transformed_point[1]
+        ])
+    equation_matrix = np.asarray(equation_matrix)
+    u, s, vh = np.linalg.svd(equation_matrix)
+    transform_matrix = vh[8][:].reshape((3,3))
+
+    im = mpimg.imread(input_image_path)
+    image_rasterization = Rasterizer(
+        im,
+        transformation_matrix = transform_matrix
+    )
+    matplotlib.image.imsave(
+        output_image_path,
+        image_rasterization.rasterize()
+    )
+
+
+def reverse_transformation(input_image_path, output_image_path, rotation):
     im = mpimg.imread(input_image_path)
 
     transform = TransformGenerator(
-        theta = 8.8*math.pi/180.0,
-        scale = 1.0
+        scale = 1.0,
+        theta = rotation*math.pi/180.0,
     )
 
     image_rasterization = Rasterizer(im, transformation = transform)

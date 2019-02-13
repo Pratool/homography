@@ -25,9 +25,11 @@ class TransformGenerator:
         self.theta = 0
         self.transposition = np.array([[0.],[0.]])
         self.scale_factor = 1.0
+
         self.rotate(theta)
         self.transpose(transposition)
         self.scale(scale)
+        self.build_matrix()
 
     def build_matrix(self):
         """ """
@@ -47,7 +49,6 @@ class TransformGenerator:
             [ math.cos(self.theta), -1*math.sin(self.theta) ],
             [ math.sin(self.theta), math.cos(self.theta) ]
         ])
-        return self.build_matrix()
 
     def transpose(self, transposition):
         """
@@ -56,7 +57,6 @@ class TransformGenerator:
 
         """
         self.transposition += transposition
-        return self.build_matrix()
 
     def scale(self, scale):
         """
@@ -65,7 +65,6 @@ class TransformGenerator:
 
         """
         self.scale_factor *= scale
-        return self.build_matrix()
 
     def get_matrix(self):
         """ """
