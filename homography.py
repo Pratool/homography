@@ -16,37 +16,38 @@ def main():
     if len(sys.argv) == 4:
         input_image_path = sys.argv[1]
         output_image_path = sys.argv[2]
-        rotation = float(sys.argv[3])/10.0
+        scale = float(sys.argv[3])
     else:
         input_image_path = "./media/t2.png"
         output_image_path = "output.png"
-        rotation = 4.5
-    #reverse_transformation(input_image_path, output_image_path, rotation)
+        scale = 300;
+    # 825 by 562
     homography_matrix(
         input_image_path,
         output_image_path,
         [
             (
-                (196, 57),
-                (0, 0),
+                (198, 52),
+                (0, 0)
             ),
             (
-                (802, 86),
-                (40, 0),
+                (799, 87),
+                (825, 0)
             ),
             (
-                (33, 446),
-                (0, 20)
+                (739, 523),
+                (825, 562)
             ),
             (
-                (739, 524),
-                (40, 20)
+                (34, 448),
+                (0, 562)
             )
-        ]
+        ],
+        scale
     )
 
 def homography_matrix(input_image_path, output_image_path,
-                      corresponding_points):
+                      corresponding_points, scale):
     equation_matrix = []
     for point_pair in corresponding_points:
         original_point, transformed_point = point_pair
@@ -75,6 +76,7 @@ def homography_matrix(input_image_path, output_image_path,
     equation_matrix = np.asarray(equation_matrix)
     u, s, vh = np.linalg.svd(equation_matrix)
     transform_matrix = vh[8][:].reshape((3,3))
+    transform_matrix *= scale;
 
     im = mpimg.imread(input_image_path)
     image_rasterization = Rasterizer(
