@@ -5,12 +5,11 @@ def main():
 
 def get_p(inputs, outputs):
     P = []
+    print([ i for i in zip(inputs,outputs)])
     for (x,y),(u,v) in zip(inputs,outputs):
-        temp = [ y-v, u-x, x*v-y*u ]
         P.extend([
-            temp + [0]*3 + [0]*3,
-            [0]*3 + temp + [0]*3,
-            [0]*3 + [0]*3 + temp
+            [-x, -y, -1] + [0]*3 + [x*u, y*u, u],
+            [0]*3 + [-x, -y, -1] + [x*v, y*v, v]
         ])
     u, s, vh = np.linalg.svd(P)
     transform_matrix = vh[8][:].reshape((3,3))

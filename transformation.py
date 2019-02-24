@@ -11,6 +11,8 @@ def multiply(vec, matrix):
     """
     aug_vec = np.vstack((vec, np.array([[1]])))
     outvec = matrix@aug_vec
+    w = outvec[2][0]
+    outvec /= w
     return outvec[:2]
 
 class TransformGenerator:

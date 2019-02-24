@@ -13,21 +13,19 @@ import sys
 
 def main():
     """ """
-    if len(sys.argv) == 4:
+    if len(sys.argv) == 3:
         input_image_path = sys.argv[1]
         output_image_path = sys.argv[2]
-        scale = float(sys.argv[3])
     else:
         input_image_path = "./media/t2.png"
         output_image_path = "output.png"
-        scale = 300;
     # 825 by 562
     homography_matrix(
         input_image_path,
         output_image_path,
         [
             (
-                (198, 52),
+                (198, 58),
                 (0, 0)
             ),
             (
@@ -42,41 +40,12 @@ def main():
                 (34, 448),
                 (0, 562)
             )
-        ],
-        scale
+        ]
     )
 
 def homography_matrix(input_image_path, output_image_path,
-                      corresponding_points, scale):
-    equation_matrix = []
-    for point_pair in corresponding_points:
-        original_point, transformed_point = point_pair
-        equation_matrix.append([
-            -1.*original_point[0],
-            -1.*original_point[1],
-            -1.,
-            0.,
-            0.,
-            0.,
-            original_point[0]*transformed_point[0],
-            original_point[1]*transformed_point[0],
-            transformed_point[0]
-        ])
-        equation_matrix.append([
-            0.,
-            0.,
-            0.,
-            -1.*original_point[0],
-            -1.*original_point[1],
-            -1.,
-            original_point[0]*transformed_point[1],
-            original_point[1]*transformed_point[1],
-            transformed_point[1]
-        ])
-    equation_matrix = np.asarray(equation_matrix)
-    u, s, vh = np.linalg.svd(equation_matrix)
-    transform_matrix = vh[8][:].reshape((3,3))
-    transform_matrix *= scale;
+                      corresponding_points):
+    transform_matrix = get_p(corresponding_points)
 
     im = mpimg.imread(input_image_path)
     image_rasterization = Rasterizer(
@@ -88,6 +57,16 @@ def homography_matrix(input_image_path, output_image_path,
         image_rasterization.rasterize()
     )
 
+def get_p(corresponding_points):
+    P = []
+    for (x,y),(u,v) in corresponding_points:
+        P.extend([
+            [-x, -y, -1] + [0]*3 + [x*u, y*u, u],
+            [0]*3 + [-x, -y, -1] + [x*v, y*v, v]
+        ])
+    u, s, vh = np.linalg.svd(P)
+    transform_matrix = vh[8][:].reshape((3,3))
+    return transform_matrix
 
 def reverse_transformation(input_image_path, output_image_path, rotation):
     im = mpimg.imread(input_image_path)
