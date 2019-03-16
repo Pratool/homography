@@ -16,6 +16,11 @@ import sys
 
 def main():
     args = _getParsedArgs(sys.argv[1:])
+
+    if args.p:
+        _pointPicker(args.input_image)
+        sys.exit(0)
+
     transformImage(
         args.input_image,
         args.output_image,
@@ -24,11 +29,12 @@ def main():
 
 def transformImage(input_image_path, output_image_path,
                       corresponding_points):
+
+    im = mpimg.imread(input_image_path)
+
     transform_matrix = DirectLinearTransform.computeTransform(
         corresponding_points
     )
-
-    im = mpimg.imread(input_image_path)
     image_rasterization = Rasterizer(
         im,
         transformation_matrix = transform_matrix
@@ -37,6 +43,15 @@ def transformImage(input_image_path, output_image_path,
         output_image_path,
         image_rasterization.rasterize()
     )
+
+def _pointPicker(input_image_path):
+    """ Utility function to select coordinates on image """
+    image = mpimg.imread(input_image_path)
+    onclick = lambda ev: print(ev.xdata, ev.ydata)
+    fig = plt.figure()
+    axes = plt.imshow(image)
+    fig.canvas.mpl_connect('button_press_event', onclick)
+    plt.show()
 
 def _readCorrespondences(correspondenceFilePath):
     with open(correspondenceFilePath, 'r') as correspondenceFileHandler:
@@ -47,6 +62,10 @@ def _getParsedArgs(args):
         description = "CLI input to homography application"
     )
 
+    parser.add_argument(
+        "-p",
+        action = "store_true",
+        help = "use point picker utility")
     parser.add_argument(
         "--input-image",
         default = "./media/t2.png",
