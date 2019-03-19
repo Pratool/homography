@@ -7,7 +7,8 @@ import sys
 
 class Rasterizer:
     def __init__(self, image_matrix, transformation=None,
-                 transformation_matrix=None):
+                 transformation_matrix=None, canvas_dimensions=None,
+                 canvas_location=(0,0)):
         if transformation is not None and transformation_matrix is None:
             self.inverse_transformation_matrix = \
                     np.linalg.inv(transformation.build_matrix())
@@ -21,6 +22,11 @@ class Rasterizer:
             raise Exception("Need to provide one of transformation input class "
                             "or a transformation matrix.")
 
+        self.canvas_dimensions = canvas_dimensions
+        if self.canvas_dimensions is None:
+            self.canvas_dimensions = image_matrix[:,:,0].shape
+
+        self.canvas_location = canvas_location
         self.image_matrix = image_matrix
         self.export = None
 
@@ -30,10 +36,10 @@ class Rasterizer:
 
         transform_matrix = self.inverse_transformation_matrix
 
-        output_image = np.zeros(shape=(original_max_x, original_max_y, 3))
+        output_image = np.zeros(shape=(self.canvas_dimensions[0], self.canvas_dimensions[1], 3))
 
-        for i in range(0, output_image[:,:,0].shape[0]):
-            for j in range(0, output_image[:,:,0].shape[1]):
+        for i in range(self.canvas_location[0], self.canvas_dimensions[0]):
+            for j in range(self.canvas_location[1], self.canvas_dimensions[0]):
                 vec = np.array([i,j]).reshape(2,1)
                 vec_in_original = multiply(vec, transform_matrix)
 
