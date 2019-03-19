@@ -47,10 +47,12 @@ def transformImage(input_image_path, output_image_path,
 def _pointPicker(input_image_path):
     """ Utility function to select coordinates on image """
     image = mpimg.imread(input_image_path)
-    onclick = lambda ev: print(ev.xdata, ev.ydata)
     fig = plt.figure()
     axes = plt.imshow(image)
-    fig.canvas.mpl_connect('button_press_event', onclick)
+    fig.canvas.mpl_connect(
+        'button_press_event',
+        lambda ev: print(ev.xdata, ev.ydata)
+    )
     plt.show()
 
 def _readCorrespondences(correspondenceFilePath):
