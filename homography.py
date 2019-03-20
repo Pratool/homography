@@ -24,20 +24,26 @@ def main():
     transformImage(
         args.input_image,
         args.output_image,
-        _readCorrespondences(args.correspondences)
+        _readCorrespondences(args.correspondences),
+        args.background
     )
 
 def transformImage(input_image_path, output_image_path,
-                      corresponding_points):
+                   corresponding_points, background_path):
 
     im = mpimg.imread(input_image_path)
+
+    bg_im = None
+    if background_path is not None:
+        bg_im = mpimg.imread(background_path)
 
     transform_matrix = DirectLinearTransform.computeTransform(
         corresponding_points
     )
     image_rasterization = Rasterizer(
         im,
-        transformation_matrix = transform_matrix
+        transformation_matrix = transform_matrix,
+        background = bg_im
     )
     matplotlib.image.imsave(
         output_image_path,
@@ -80,6 +86,10 @@ def _getParsedArgs(args):
         "--correspondences",
         default = "3.json",
         help = "corresponding set of points to derive transform")
+    parser.add_argument(
+        "--background",
+        default = None,
+        help = "optionally specify background image to act as canvas")
 
     return parser.parse_args(args)
 

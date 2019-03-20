@@ -8,7 +8,7 @@ import sys
 class Rasterizer:
     def __init__(self, image_matrix, transformation=None,
                  transformation_matrix=None, canvas_dimensions=None,
-                 canvas_location=(0,0)):
+                 canvas_location=(0,0), background=None):
         if transformation is not None and transformation_matrix is None:
             self.inverse_transformation_matrix = \
                     np.linalg.inv(transformation.build_matrix())
@@ -22,9 +22,34 @@ class Rasterizer:
             raise Exception("Need to provide one of transformation input class "
                             "or a transformation matrix.")
 
-        self.canvas_dimensions = canvas_dimensions
-        if self.canvas_dimensions is None:
+        self.output = background
+        if canvas_dimensions is None and self.output is None:
             self.canvas_dimensions = image_matrix[:,:,0].shape
+            self.output = np.zeros(
+                shape=(
+                    self.canvas_dimensions[0],
+                    self.canvas_dimensions[1],
+                    3
+                )
+            )
+        elif canvas_dimensions is None and self.output is not None:
+            self.canvas_dimensions = self.output.shape
+        elif canvas_dimensions is not None and self.output is None:
+            self.canvas_dimensions = canvas_dimensions
+            self.output = np.zeros(
+                shape=(
+                    self.canvas_dimensions[0],
+                    self.canvas_dimensions[1],
+                    3
+                )
+            )
+        elif canvas_dimensions is not None and self.output is not None:
+            raise RuntimeError("Scaling background image by linearly "
+                               "interpolating to specified canvas is "
+                               "unsupported.")
+        else:
+            raise Exception("Unknown combination of canvas_dimensions and "
+                            "output parameters")
 
         self.canvas_location = canvas_location
         self.image_matrix = image_matrix
@@ -35,8 +60,6 @@ class Rasterizer:
         original_max_x, original_max_y = self.image_matrix[:,:,0].shape
 
         transform_matrix = self.inverse_transformation_matrix
-
-        output_image = np.zeros(shape=(self.canvas_dimensions[0], self.canvas_dimensions[1], 3))
 
         for i in range(self.canvas_location[0], self.canvas_dimensions[0]):
             for j in range(self.canvas_location[1], self.canvas_dimensions[0]):
@@ -63,7 +86,7 @@ class Rasterizer:
                 self.output[j][i][1] = interpolate(1)
                 self.output[j][i][2] = interpolate(2)
 
-        self.export = output_image
+        self.export = self.output
         return self.export
 
 def _linear_interpolate(delta_x, delta_y, top_left, top_right, bottom_left,
