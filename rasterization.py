@@ -59,9 +59,9 @@ class Rasterizer:
                                                         im[h+1][k][l],
                                                         im[h][k+1][l],
                                                         im[h+1][k+1][l])
-                output_image[i][j][0] = interpolate(0)
-                output_image[i][j][1] = interpolate(1)
-                output_image[i][j][2] = interpolate(2)
+                self.output[j][i][0] = interpolate(0)
+                self.output[j][i][1] = interpolate(1)
+                self.output[j][i][2] = interpolate(2)
 
         self.export = output_image
         return self.export
