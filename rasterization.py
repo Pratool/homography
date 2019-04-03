@@ -25,15 +25,10 @@ class Rasterizer:
         self.output = background
         if canvas_dimensions is None and self.output is None:
             self.canvas_dimensions = image_matrix[:,:,0].shape
-            self.output = np.zeros(
-                shape=(
-                    self.canvas_dimensions[0],
-                    self.canvas_dimensions[1],
-                    3
-                )
-            )
+            self.output = np.zeros(shape = image_matrix.shape)
         elif canvas_dimensions is None and self.output is not None:
-            self.canvas_dimensions = self.output.shape
+            max_y, max_x, max_layer = self.output.shape
+            self.canvas_dimensions = (max_x, max_y, max_layer)
         elif canvas_dimensions is not None and self.output is None:
             self.canvas_dimensions = canvas_dimensions
             self.output = np.zeros(
@@ -57,31 +52,31 @@ class Rasterizer:
 
     def rasterize(self):
         im = self.image_matrix
-        original_max_x, original_max_y = self.image_matrix[:,:,0].shape
+        original_max_y, original_max_x = self.image_matrix[:,:,0].shape
 
         transform_matrix = self.inverse_transformation_matrix
 
         for i in range(self.canvas_location[0], self.canvas_dimensions[0]):
-            for j in range(self.canvas_location[1], self.canvas_dimensions[0]):
-                vec = np.array([i,j]).reshape(2,1)
+            for j in range(self.canvas_location[1], self.canvas_dimensions[1]):
+                vec = np.array([j,i]).reshape(2,1)
                 vec_in_original = multiply(vec, transform_matrix)
 
-                if vec_in_original[0]+1 > original_max_x or vec_in_original[1]+1 > original_max_y:
+                if vec_in_original[0]+1 > original_max_y or vec_in_original[1]+1 > original_max_x:
                     continue
                 if vec_in_original[0]-1 < 0 or vec_in_original[1]-1 < 0:
                     continue
 
-                h = math.floor(vec_in_original[0])
-                k = math.floor(vec_in_original[1])
-                delta_x = vec_in_original[0] - h
-                delta_y = vec_in_original[1] - k
+                h = math.floor(vec_in_original[1])
+                k = math.floor(vec_in_original[0])
+                delta_x = vec_in_original[1] - h
+                delta_y = vec_in_original[0] - k
 
                 interpolate = lambda l: _linear_interpolate(delta_x,
                                                         delta_y,
-                                                        im[h][k][l],
-                                                        im[h+1][k][l],
-                                                        im[h][k+1][l],
-                                                        im[h+1][k+1][l])
+                                                        im[k][h][l],
+                                                        im[k][h+1][l],
+                                                        im[k+1][h][l],
+                                                        im[k+1][h+1][l])
                 self.output[j][i][0] = interpolate(0)
                 self.output[j][i][1] = interpolate(1)
                 self.output[j][i][2] = interpolate(2)
