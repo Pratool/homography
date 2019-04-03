@@ -1,19 +1,27 @@
-Requires the following python3 packages:
+In order to run the homography application, you will need:
+- Python 3.5+
+    - the latest released python3 package on most linux distributions' package
+      managers should suffice
+- matplotlib, numpy PyPI packages
+    - both of these can be installed from pip (be sure to use pip3 if python2 is
+      the default python interpreter!)
+    - my personal recommendation is to create a python3 virtual environment for
+      installed packages
+- a PNG image
+- a JSON-formatted correspondences configuration file
+    - there should be exactly four correspondences
+    - the first of an array will always match the input image point
+    - the second of an array will always match the destination image point
+    - see configs/t4_onto_t5.json for a specific example
 
-```
-cycler==0.10.0
-kiwisolver==1.0.1
-matplotlib==3.0.2
-numpy==1.16.0
-pandas==0.23.4
-Pyment==0.3.3
-pyparsing==2.3.1
-python-dateutil==2.7.5
-pytz==2018.9
-scipy==1.2.0
-seaborn==0.9.0
-six==1.12.0
-```
+The command line tool can be invoked with:
+`python3 homography.py --help`
 
-Pyment is for development purposes only.
-
+For example, this command takes an image as input and transforms it with the
+correspondences provided and the output is layerd on top of a background image.
+This is a demonstration of the "billboard" effect. Note that none of the iamges
+have been provided.
+```python homography.py --input-image media/t4.png \
+    --correspondences configs/t4_onto_t5_2.json \
+    --output-image test02.png \
+    --background media/t5.png```
