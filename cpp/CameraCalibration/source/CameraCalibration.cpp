@@ -3,23 +3,18 @@
  * \brief Functions useful for calibrating cameras.
  **/
 
-/* Must provide the following features:
- * Open JPG images
- * Convert JPG images to matrix of numerical data.
- * Save images, ideally in same input format.
- */
-
 #include <iostream>
 #include <vector>
 
 #include <opencv2/core/core.hpp>
+#include <opencv2/core/types_c.h>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
 #include "CameraCalibration.hpp"
 
-void findChessBoard(const std::string &imagePath)
+void computeCameraCalibration(const std::string &imagePath)
 {
     cv::Mat image;
     image = cv::imread(imagePath, 1);
@@ -29,24 +24,55 @@ void findChessBoard(const std::string &imagePath)
         throw std::runtime_error("Could not open or find the image.");
     }
 
-    cv::Size patternSize(10, 7);
+    constexpr int innerPointsLength = 6;
+    constexpr int innerPointsWidth = 4;
+    constexpr double squareSize_mm = 30.0;
+
+    std::vector<cv::Vec3f> objectPoint;
+    for (int i = 0; i < innerPointsLength; ++i)
+    {
+        for (int ii = 0; ii < innerPointsWidth; ++ii)
+        {
+            objectPoint.emplace_back(
+                    cv::Vec3f(i*squareSize_mm, ii*squareSize_mm, 0));
+        }
+    }
+
+    cv::Size patternSize(innerPointsLength, innerPointsWidth);
+
     cv::Mat grayImage;
     cv::cvtColor(image, grayImage, cv::COLOR_BGR2GRAY);
-    std::vector<cv::Point2f> corners;
+
+    std::vector<std::vector<cv::Vec3f>> objectPoints;
+    std::vector<std::vector<cv::Vec2f>> imagePoints;
+    std::vector<cv::Vec2f> corners;
 
     bool successFindingChessboard =
         cv::findChessboardCorners(grayImage, patternSize, corners);
 
     if (successFindingChessboard)
     {
-        for (auto i : corners)
-        {
-            std::clog << i << std::endl;
-        }
+        cv::cornerSubPix(grayImage, corners, cv::Size(5,5), cv::Size(-1,-1),
+                         cv::TermCriteria(CV_TERMCRIT_EPS | CV_TERMCRIT_ITER, 30, 0.1));
+
+        imagePoints.emplace_back(corners);
+        objectPoints.push_back(objectPoint);
+
+        cv::drawChessboardCorners(image, patternSize, corners, successFindingChessboard);
+        cv::namedWindow("Display window", cv::WINDOW_AUTOSIZE);
+        cv::imshow("Display window", image);
+        cv::waitKey(0);
     }
 
-    cv::namedWindow("Display window", cv::WINDOW_AUTOSIZE);
-    cv::imshow("Display window", image);
+    cv::Mat K;
+    cv::Mat D;
+    std::vector<cv::Mat> rvecs, tvecs;
+    int flag = 0;
+    flag |= cv::CALIB_FIX_K4;
+    flag |= cv::CALIB_FIX_K5;
 
-    cv::waitKey(0);
+    cv::calibrateCamera(objectPoints, imagePoints, image.size(), K, D, rvecs, tvecs, flag);
+
+    std::clog << K << std::endl;
+    std::clog << D << std::endl;
 }

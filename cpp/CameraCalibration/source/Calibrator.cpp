@@ -7,7 +7,7 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    findChessBoard(argv[1]);
+    computeCameraCalibration(argv[1]);
 
     return 0;
 }

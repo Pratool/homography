@@ -2,4 +2,4 @@
 
 #include <string>
 
-void findChessBoard(const std::string &imagePath);
+void computeCameraCalibration(const std::string &imagePath);
