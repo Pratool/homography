@@ -14,3 +14,4 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 add_subdirectory(CameraCalibration)
+add_subdirectory(Panorama)
