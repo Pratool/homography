@@ -13,30 +13,40 @@
 #include <opencv2/highgui/highgui.hpp>
 
 #include "CameraCalibration.hpp"
+#include "Utilities.hpp"
 
-void computeCameraCalibration(const std::string &imagePath)
+std::ostream& operator<< (std::ostream &stream, const CameraCalibrationData &data)
 {
-    cv::Mat image;
-    image = cv::imread(imagePath, 1);
+    stream << "Camera Matrix:" << std::endl
+           << data.cameraMatrix << std::endl
+           << "Distortion Coefficients:" << std::endl
+           << data.distortionCoefficients << std::endl;
 
-    if (! image.data)
+    stream << "Rotation Vectors:\n";
+    for (const auto &vec : data.rotationVectors)
     {
-        throw std::runtime_error("Could not open or find the image.");
+           stream << vec << std::endl;
     }
 
-    constexpr int innerPointsLength = 6;
-    constexpr int innerPointsWidth = 4;
-    constexpr double squareSize_mm = 30.0;
-
-    std::vector<cv::Vec3f> objectPoint;
-    for (int i = 0; i < innerPointsLength; ++i)
+    stream << "Translation Vectors:\n";
+    for (const auto &vec : data.translationVectors)
     {
-        for (int ii = 0; ii < innerPointsWidth; ++ii)
-        {
-            objectPoint.emplace_back(
-                    cv::Vec3f(i*squareSize_mm, ii*squareSize_mm, 0));
-        }
+           stream << vec << std::endl;
     }
+
+    return stream;
+}
+
+
+std::optional<CameraCalibrationData>
+computeCameraCalibrationFromChessboard(
+    cv::Mat&& image,
+    unsigned int innerPointsLength,
+    unsigned int innerPointsWidth,
+    double squareSize_mm)
+{
+    std::vector<cv::Vec3f> objectPoint =
+        createObjectPoint(innerPointsLength, innerPointsWidth, squareSize_mm);
 
     cv::Size patternSize(innerPointsLength, innerPointsWidth);
 
@@ -58,21 +68,21 @@ void computeCameraCalibration(const std::string &imagePath)
         imagePoints.emplace_back(corners);
         objectPoints.push_back(objectPoint);
 
-        cv::drawChessboardCorners(image, patternSize, corners, successFindingChessboard);
-        cv::namedWindow("Display window", cv::WINDOW_AUTOSIZE);
-        cv::imshow("Display window", image);
-        cv::waitKey(0);
+        CameraCalibrationData calibrationData;
+        int flag = 0;
+        flag |= cv::CALIB_FIX_K4;
+        flag |= cv::CALIB_FIX_K5;
+
+        cv::calibrateCamera(
+            objectPoints, imagePoints, image.size(),
+            calibrationData.cameraMatrix,
+            calibrationData.distortionCoefficients,
+            calibrationData.rotationVectors,
+            calibrationData.translationVectors,
+            flag);
+
+        return calibrationData;
     }
 
-    cv::Mat K;
-    cv::Mat D;
-    std::vector<cv::Mat> rvecs, tvecs;
-    int flag = 0;
-    flag |= cv::CALIB_FIX_K4;
-    flag |= cv::CALIB_FIX_K5;
-
-    cv::calibrateCamera(objectPoints, imagePoints, image.size(), K, D, rvecs, tvecs, flag);
-
-    std::clog << K << std::endl;
-    std::clog << D << std::endl;
+    return {};
 }

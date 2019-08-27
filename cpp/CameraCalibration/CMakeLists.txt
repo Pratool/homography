@@ -4,7 +4,8 @@ find_package(OpenCV 4.1 REQUIRED)
 
 add_executable(calibrator
     ${CMAKE_CURRENT_SOURCE_DIR}/source/CameraCalibration.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/source/Calibrator.cpp)
+    ${CMAKE_CURRENT_SOURCE_DIR}/source/Calibrator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/source/Utilities.cpp)
 
 target_include_directories(calibrator PRIVATE include)
 
