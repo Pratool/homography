@@ -24,7 +24,7 @@ int main(int argc, char** argv)
         throw std::runtime_error("Could not open or find the image.");
     }
 
-    distortSourceToMatchTarget(sourceImage, targetImage);
+    stitchImages(sourceImage, targetImage);
 
     return 0;
 }

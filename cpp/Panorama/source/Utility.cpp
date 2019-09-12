@@ -83,8 +83,7 @@ WarpBounds getWarpedBounds(const cv::Size &sourceImageSize,
         minHeight};
 }
 
-cv::Mat distortSourceToMatchTarget(
-    const cv::Mat &sourceImage, const cv::Mat &targetImage)
+cv::Mat stitchImages(const cv::Mat &sourceImage, const cv::Mat &targetImage)
 {
     if (! sourceImage.data || ! targetImage.data)
     {
@@ -118,7 +117,6 @@ cv::Mat distortSourceToMatchTarget(
             sourceDescriptors,
             nearestNeighborMatches,
             2);
-    std::clog << "finished running matcher" << std::endl;
 
 
     // Get all nearest neighbor matches where the best and second-best matches
@@ -134,7 +132,6 @@ cv::Mat distortSourceToMatchTarget(
             matches.push_back(matchVec[0]);
         }
     }
-    std::clog << "filtered matches" << std::endl;
 
 
     // Get the pixel coordinates of each of the matches.
@@ -170,9 +167,6 @@ cv::Mat distortSourceToMatchTarget(
     // Find the bounds and translation vector necessary to align the sourceImage
     // into the targetImage frame.
     WarpBounds warpBounds = getWarpedBounds(sourceImage.size(), homography);
-    std::clog << "warped image size " << warpBounds.size << std::endl;
-    std::clog << "warped image min. bounds: "
-              << warpBounds.minWidth << " x " << warpBounds.minHeight << std::endl;
 
     // Translate the warped source by an amount to get its edges
     // to line up with the bounds of the image frame, which must be 0.
@@ -180,13 +174,9 @@ cv::Mat distortSourceToMatchTarget(
     targetFrameHomography.at<double>(0, 2) -= warpBounds.minWidth;
     targetFrameHomography.at<double>(1, 2) -= warpBounds.minHeight;
 
-    std::clog << "translation matrix to keep source and target images in bound:" << std::endl;
-    std::clog << targetFrameHomography << std::endl;
-
     // Apply translation transform (captured by targetFrameHomography) AFTER
     // applying projective transformation i.e. order of operations here matter.
     homography = cv::Mat(targetFrameHomography*homography);
-    std::clog << homography << std::endl;
 
     const auto newSize = cv::Size(
         warpBounds.size.width + warpBounds.minWidth > targetImage.size().width ?
@@ -207,7 +197,8 @@ cv::Mat distortSourceToMatchTarget(
     cv::Mat dst;
     cv::addWeighted(sourceWarped, 0.5, targetWarped, 0.5, 0.0, dst);
     cv::imwrite("blended.png", dst);
-    std::clog << "wrote blended.png" << std::endl;
+    cv::imwrite("sourceWarped.png", sourceWarped);
+    cv::imwrite("targetWarped.png", targetWarped);
 
     pcv::ConvexPolygon<int> poly0;
     pcv::ConvexPolygon<int> poly1;

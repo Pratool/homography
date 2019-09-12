@@ -7,7 +7,7 @@
 #include <opencv2/core/core.hpp>
 #include <Eigen/Dense>
 
-cv::Mat distortSourceToMatchTarget(
+cv::Mat stitchImages(
     const cv::Mat &sourceImage, const cv::Mat &targetImage);
 
 namespace utility
