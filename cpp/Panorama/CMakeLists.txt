@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.8.2)
 
+find_package(Eigen3 REQUIRED)
 find_package(OpenCV 4.1 REQUIRED)
 
 add_library(Panorama SHARED
@@ -12,7 +13,9 @@ target_include_directories(Panorama
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/source)
 
-target_link_libraries(Panorama ${OpenCV_LIBS})
+target_link_libraries(Panorama
+    ${OpenCV_LIBS}
+    Eigen3::Eigen)
 
 install(TARGETS Panorama EXPORT Panorama
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
