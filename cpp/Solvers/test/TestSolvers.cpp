@@ -1,4 +1,4 @@
-#include <Panorama/Utility.hpp>
+#include <Solvers/Ransac.hpp>
 
 #include <ceres/ceres.h>
 #include <gtest/gtest.h>
@@ -15,7 +15,7 @@ TEST(HomogenousCoordinates, Distance)
         0, 1, 0,
         0, 0, 1;
 
-    const double distance = utility::getReprojectionError(
+    const double distance = pcv::getReprojectionError(
         identity,
         std::pair(cv::Point2f{1,1}, cv::Point2f{0,0}) );
 
@@ -31,7 +31,7 @@ TEST(HomogenousCoordinates, TranslationFloats)
         0, 1, 0,
         0, 0, 1;
 
-    using namespace utility;
+    using namespace pcv;
 
     const double result0 = getReprojectionError(
         translate,
@@ -61,7 +61,7 @@ TEST(HomogenousCoordinates, TranslationDoubles)
         0, 1, 0,
         0, 0, 1;
 
-    using namespace utility;
+    using namespace pcv;
 
     const double result0 = getReprojectionError(
         translate,
@@ -91,7 +91,7 @@ TEST(FindHomography, LeastSquares)
         0, 1, 0,
         0, 0, 1;
 
-    using namespace utility;
+    using namespace pcv;
 
     std::vector<std::pair<cv::Point2f, cv::Point2f>> correspondences{
         std::pair(cv::Point2f{0,0}, cv::Point2f{1,1}),

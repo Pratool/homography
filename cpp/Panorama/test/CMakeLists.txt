@@ -11,20 +11,3 @@ target_link_libraries(testpanorama
 
 install(TARGETS testpanorama
     DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
-
-
-
-find_package(Eigen3 REQUIRED)
-find_package(GTest 1.8 REQUIRED)
-
-add_executable(TestPanoramaUtility
-    ${CMAKE_CURRENT_SOURCE_DIR}/TestUtility.cpp)
-
-target_link_libraries(TestPanoramaUtility
-    ${OpenCV_LIBS}
-    Eigen3::Eigen
-    GTest::GTest
-    Panorama)
-
-install(TARGETS TestPanoramaUtility
-    DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)

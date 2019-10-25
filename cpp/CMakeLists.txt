@@ -15,3 +15,4 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 add_subdirectory(CameraCalibration)
 add_subdirectory(Panorama)
+add_subdirectory(Solvers)
