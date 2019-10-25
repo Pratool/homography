@@ -1,8 +1,9 @@
 #pragma once
 
 #include <numeric>
-#include <vector>
+#include <type_traits>
 #include <utility>
+#include <vector>
 
 #include <opencv2/core/core.hpp>
 #include <Eigen/Dense>
@@ -19,11 +20,15 @@ findHomographyWithRansac(
     double reprojectionErrorThreshold,
     std::size_t iterations);
 
-template<class PointType>
+template<class NumericType>
 double getReprojectionError(
     const Eigen::Matrix3d &model,
-    const std::pair<PointType, PointType> &correspondence)
+    const std::pair<cv::Point_<NumericType>, cv::Point_<NumericType>>
+        &correspondence)
 {
+    static_assert(std::is_arithmetic<NumericType>::value,
+                  "Must have a numerical point type.");
+
     // Make the first correspondence a homogenous-coordinate column vector.
     Eigen::Vector3d homogenousFirst;
     homogenousFirst <<
@@ -34,9 +39,8 @@ double getReprojectionError(
     Eigen::Vector3d estimate = model * homogenousFirst;
     estimate /= estimate(2);
 
-    return std::sqrt(
-            std::pow(estimate(0)-correspondence.second.x, 2)
-            + std::pow(estimate(1)-correspondence.second.y, 2));
+    return std::sqrt(  std::pow(estimate(0)-correspondence.second.x, 2)
+                     + std::pow(estimate(1)-correspondence.second.y, 2));
 }
 
 Eigen::Matrix3d
