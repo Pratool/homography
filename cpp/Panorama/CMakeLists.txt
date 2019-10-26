@@ -18,7 +18,13 @@ target_link_libraries(Panorama
     Eigen3::Eigen
     Solvers)
 
-install(TARGETS Panorama EXPORT Panorama
+install(TARGETS Panorama EXPORT PanoramaConfig
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+
+install(EXPORT PanoramaConfig
+        DESTINATION share/Panorama/cmake)
+
+export(TARGETS Panorama
+       FILE PanoramaConfig.cmake)
 
 add_subdirectory(test)
