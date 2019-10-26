@@ -135,44 +135,4 @@ findHomographyWithDirectLinearTransform(
     return Eigen::Matrix<double, 3, 3, Eigen::RowMajor>(svd.matrixV().col(8).data());
 }
 
-Eigen::Matrix3d
-findHomographyWithLeastSquares(
-    std::vector<std::pair<cv::Point2f, cv::Point2f>> correspondences)
-{
-    // Allocate appropriate amount of memory for Matrix.
-    Eigen::MatrixXd joinedPoints(2*correspondences.size(), 9);
-
-    for (std::size_t correspondenceIndex = 0; correspondenceIndex < correspondences.size(); ++correspondenceIndex)
-    {
-        const auto &pointPair = correspondences[correspondenceIndex];
-
-        joinedPoints.row(2*correspondenceIndex) <<
-            -pointPair.first.x,
-            -pointPair.first.y,
-            -1,
-            0,
-            0,
-            0,
-            pointPair.first.x*pointPair.second.x,
-            pointPair.first.y*pointPair.second.x,
-            pointPair.second.x;
-
-        joinedPoints.row(2*correspondenceIndex+1) <<
-            0,
-            0,
-            0,
-            -pointPair.first.x,
-            -pointPair.first.y,
-            -1,
-            pointPair.first.x*pointPair.second.y,
-            pointPair.first.y*pointPair.second.y,
-            pointPair.second.y;
-    }
-
-    Eigen::JacobiSVD<Eigen::MatrixXd> svd(
-        joinedPoints.transpose()*joinedPoints, Eigen::ComputeFullV);
-
-    return Eigen::Matrix<double, 3, 3, Eigen::RowMajor>(svd.matrixV().col(8).data());
-}
-
 } // end namespace pcv
