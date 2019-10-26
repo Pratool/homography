@@ -91,48 +91,4 @@ findHomographyWithRansac(
     return bestModel;
 }
 
-
-Eigen::Matrix3d
-findHomographyWithDirectLinearTransform(
-    std::vector<std::pair<cv::Point2f, cv::Point2f>> correspondences)
-{
-    Eigen::Matrix<double, 8, 9> joinedPoints;
-
-    std::array<Eigen::Matrix<double, 2, 9>, 4> points;
-
-    std::transform(
-        std::cbegin(correspondences),
-        std::cend(correspondences),
-        std::begin(points),
-        [](std::pair<cv::Point2f, cv::Point2f> pointPair)
-        {
-            Eigen::Matrix<double, 2, 9> tmp;
-            tmp <<
-                -pointPair.first.x,
-                -pointPair.first.y, -1, 0,
-                0,
-                0,
-                pointPair.first.x*pointPair.second.x,
-                pointPair.first.y*pointPair.second.x,
-                pointPair.second.x,
-                0,
-                0,
-                0,
-                -pointPair.first.x,
-                -pointPair.first.y,
-                -1,
-                pointPair.first.x*pointPair.second.y,
-                pointPair.first.y*pointPair.second.y,
-                pointPair.second.y;
-
-            return tmp;
-        });
-
-    joinedPoints << points[0], points[1], points[2], points[3];
-
-    Eigen::JacobiSVD<decltype(joinedPoints)> svd(joinedPoints, Eigen::ComputeFullV);
-
-    return Eigen::Matrix<double, 3, 3, Eigen::RowMajor>(svd.matrixV().col(8).data());
-}
-
 } // end namespace pcv
