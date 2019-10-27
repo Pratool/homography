@@ -3,19 +3,11 @@ cmake_minimum_required(VERSION 3.8.2)
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV 4.1 REQUIRED)
 
-add_library(Solvers SHARED
-    ${CMAKE_CURRENT_SOURCE_DIR}/source/Ransac.cpp)
+add_library(Solvers INTERFACE)
 
-target_include_directories(Solvers
-    PUBLIC
+set_property(TARGET Solvers APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
         $<INSTALL_INTERFACE:include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/source)
-
-target_link_libraries(Solvers
-    ${OpenCV_LIBS}
-    Eigen3::Eigen)
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 
 install(TARGETS Solvers EXPORT SolversConfig
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
