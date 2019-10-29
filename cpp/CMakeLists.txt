@@ -13,6 +13,7 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
+add_subdirectory(Blender)
 add_subdirectory(CameraCalibration)
 add_subdirectory(Geometry)
 add_subdirectory(Panorama)
