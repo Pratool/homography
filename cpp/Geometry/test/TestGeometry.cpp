@@ -33,11 +33,11 @@ TEST(Triagle, SignedArea)
     using namespace pcv;
     using namespace Eigen;
 
-    const double negativeArea = getSignedArea2D(Vector2d{2.0, 4.0}, Vector2d{3.0, 5.0}, Vector2d{4.0, 0.0});
-    ASSERT_EQ(negativeArea, -3.0);
+    const double negativeArea = getTwiceSignedArea2D(Vector2d{2.0, 4.0}, Vector2d{3.0, 5.0}, Vector2d{4.0, 0.0});
+    ASSERT_EQ(negativeArea, -6.0);
 
-    const double positiveArea = getSignedArea2D(Vector2d{4.0, 0.0}, Vector2d{3.0, 5.0}, Vector2d{2.0, 4.0});
-    ASSERT_EQ(positiveArea, 3.0);
+    const int positiveArea = getTwiceSignedArea2D(Vector2i{4, 0}, Vector2i{3, 5}, Vector2i{2, 4});
+    ASSERT_EQ(positiveArea, 6);
 }
 
 TEST(ConvexPolygon, PointContained)

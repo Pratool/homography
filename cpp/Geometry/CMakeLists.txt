@@ -8,6 +8,9 @@ set_property(TARGET Geometry APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 
+target_link_libraries(Geometry INTERFACE
+    Eigen3::Eigen)
+
 install(TARGETS Geometry EXPORT GeometryConfig
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 

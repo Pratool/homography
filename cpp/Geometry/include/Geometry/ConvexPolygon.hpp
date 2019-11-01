@@ -11,23 +11,29 @@ namespace pcv
 {
 
 
-template<class NumericType>
-double getSignedArea2D(
-    const Eigen::Matrix<NumericType, 2, 1> &a,
-    const Eigen::Matrix<NumericType, 2, 1> &b,
-    const Eigen::Vector2d &c)
+/**
+ * Utility function to help determine "leftness" of a point compared to the line
+ * segment drawn between the first two points. Leftness is indicated by a
+ * negative return value, which is why the tempalate parameter must be signed.
+ * Idea from Computational Geometry in C by Joseph O'Rourke.
+ */
+template<class SignedNumericType>
+SignedNumericType getTwiceSignedArea2D(
+    const Eigen::Matrix<SignedNumericType, 2, 1> &endpoint0,
+    const Eigen::Matrix<SignedNumericType, 2, 1> &endpoint1,
+    const Eigen::Matrix<SignedNumericType, 2, 1> &testpoint)
 {
-    double ax = static_cast<double>(a.x());
-    double ay = static_cast<double>(a.y());
-    double bx = static_cast<double>(b.x());
-    double by = static_cast<double>(b.y());
-    double cx = static_cast<double>(c.x());
-    double cy = static_cast<double>(c.y());
+    static_assert(std::is_signed<SignedNumericType>::value);
 
-    return 0.5
-           * (((bx - ax) * (cy - ay))
-            - ((cx - ax) * (by - ay))); 
+    // Aliases for more readable arithmetic.
+    const auto &a = endpoint0;
+    const auto &b = endpoint1;
+    const auto &c = testpoint;
+
+    return ((b.x() - a.x()) * (c.y() - a.y()))
+         - ((c.x() - a.x()) * (b.y() - a.y()));
 }
+
 
 template<class NumericType>
 class ConvexPolygon
@@ -67,7 +73,12 @@ public:
             true,
             [&cachedVertex, testPoint](bool isContained, decltype(cachedVertex) vertexIter)
             {
-                isContained &= getSignedArea2D(cachedVertex, vertexIter, testPoint) < 1e-15;
+                isContained &=
+                    getTwiceSignedArea2D(
+                        static_cast<Eigen::Vector2d>(cachedVertex.template cast<double>()),
+                        static_cast<Eigen::Vector2d>(vertexIter.template cast<double>()),
+                        testPoint) <= 0;
+
                 cachedVertex = vertexIter;
                 return isContained;
             });
