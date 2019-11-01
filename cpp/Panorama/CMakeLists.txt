@@ -16,6 +16,7 @@ target_include_directories(Panorama
 target_link_libraries(Panorama
     ${OpenCV_LIBS}
     Eigen3::Eigen
+    Geometry
     Solvers)
 
 install(TARGETS Panorama EXPORT PanoramaConfig

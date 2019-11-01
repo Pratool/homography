@@ -2,7 +2,9 @@
 #include <vector>
 #include <random>
 
+#include <Eigen/Dense>
 #include <opencv2/core/core.hpp>
+#include <opencv2/core/eigen.hpp>
 #include <opencv2/core/types_c.h>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
@@ -11,6 +13,7 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/opencv.hpp>
 
+#include <Geometry/ConvexPolygon.hpp>
 #include <Solvers/Ransac.hpp>
 
 #include "Panorama/Utility.hpp"
@@ -197,6 +200,63 @@ cv::Mat distortSourceToMatchTarget(
     cv::addWeighted(sourceWarped, 0.5, targetWarped, 0.5, 0.0, dst);
     cv::imwrite("blended.png", dst);
     std::clog << "wrote blended.png" << std::endl;
+
+    pcv::ConvexPolygon<int> poly0;
+    pcv::ConvexPolygon<int> poly1;
+    std::array<cv::Vec3d, 4> corners0({
+        cv::Vec3d(0, 0, 1),
+        cv::Vec3d(0, sourceImage.size().height, 1),
+        cv::Vec3d(sourceImage.size().width, sourceImage.size().height, 1),
+        cv::Vec3d(sourceImage.size().width, 0, 1)});
+    std::array<cv::Vec3d, 4> corners1({
+        cv::Vec3d(0, 0, 1),
+        cv::Vec3d(0, targetImage.size().height, 1),
+        cv::Vec3d(targetImage.size().width, targetImage.size().height, 1),
+        cv::Vec3d(targetImage.size().width, 0, 1)});
+
+    for (auto &corner : corners0)
+    {
+        const auto tmpCorner = cv::Mat(homography * corner);
+        const auto &z = tmpCorner.at<double>(0, 2);
+        Eigen::Vector2i tmpPoint(static_cast<int>(tmpCorner.at<double>(0, 0)/z),
+                                 static_cast<int>(tmpCorner.at<double>(0, 1)/z));
+        poly0.addVertex(tmpPoint);
+    }
+    for (auto &corner : corners1)
+    {
+        const auto tmpCorner = cv::Mat(targetFrameHomography * corner);
+        const auto &z = tmpCorner.at<double>(0, 2);
+        Eigen::Vector2i tmpPoint(static_cast<int>(tmpCorner.at<double>(0, 0)/z),
+                                 static_cast<int>(tmpCorner.at<double>(0, 1)/z));
+        poly1.addVertex(tmpPoint);
+    }
+
+    std::vector<pcv::ConvexPolygon<int>> polys({poly0, poly1});
+
+    std::array<cv::Mat, 3> channels;
+    cv::split(dst, channels.data());
+    cv::Mat_<uint8_t> tmpcvmat;
+    pcv::makePolygonIntersectionOpencvGrid(
+        polys, channels[0].rows, channels[0].cols, tmpcvmat);
+
+    std::array<cv::Mat, 3> outputChannels;
+    std::array<cv::Mat, 3> outputChannels2;
+    for (std::size_t i = 0; i < 3; ++i)
+    {
+        outputChannels[i] = cv::Mat(channels[i].mul(tmpcvmat));
+    }
+    tmpcvmat = (tmpcvmat * -1) + 1;
+    for (std::size_t i = 0; i < 3; ++i)
+    {
+        outputChannels2[i] = cv::Mat(channels[i].mul(tmpcvmat));
+        outputChannels[i] = outputChannels[i]+2*outputChannels2[i];
+    }
+
+    cv::Mat output;
+    cv::merge(outputChannels.data(), 3, output);
+
+    cv::imwrite("intersection.png", output);
+    std::clog << "wrote intersection.png" << std::endl;
 
     return sourceWarped;
 }
