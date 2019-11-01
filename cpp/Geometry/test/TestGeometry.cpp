@@ -64,7 +64,7 @@ TEST(ConvexPolygon, PointContained)
 }
 
 
-TEST(ConvexPolygon, Rasterize)
+TEST(ConvexPolygon, RasterizeToEigen)
 {
     using namespace pcv;
     using namespace Eigen;
@@ -76,7 +76,7 @@ TEST(ConvexPolygon, Rasterize)
     polygon.addVertex(Vector2i{4, 0});
     polygon.addVertex(Vector2i{0, 0});
 
-    MatrixXi autoMask = makePolygonIntersectionGrid<int>({polygon}, 7, 7);
+    MatrixXi autoMask = makePolygonIntersectionEigenGrid<int>({polygon}, 7, 7);
 
     MatrixXi mask(7, 7);
     mask <<
@@ -89,6 +89,37 @@ TEST(ConvexPolygon, Rasterize)
         1, 1, 1, 1, 1, 0, 0;
 
     ASSERT_TRUE(mask == autoMask);
+}
+
+
+TEST(ConvexPolygon, RasterizeToOpenCV)
+{
+    using namespace pcv;
+    using namespace Eigen;
+
+    ConvexPolygon<int> polygon{};
+
+    polygon.addVertex(Vector2i{2, 4});
+    polygon.addVertex(Vector2i{3, 5});
+    polygon.addVertex(Vector2i{4, 0});
+    polygon.addVertex(Vector2i{0, 0});
+
+    cv::Mat_<int> autoMask;
+    makePolygonIntersectionOpencvGrid(
+        std::vector<ConvexPolygon<int>>({polygon}), 7, 7, autoMask);
+
+    cv::Mat_<int> mask(7, 7);
+    mask = (cv::Mat_<int>(7, 7) <<
+        0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 1, 0, 0, 0,
+        0, 0, 1, 1, 0, 0, 0,
+        0, 0, 1, 1, 0, 0, 0,
+        0, 1, 1, 1, 0, 0, 0,
+        0, 1, 1, 1, 0, 0, 0,
+        1, 1, 1, 1, 1, 0, 0);
+
+    cv::Mat diff = mask != autoMask;
+    ASSERT_TRUE(cv::countNonZero(diff) == 0);
 }
 
 TEST(LineSegment, Intersection)

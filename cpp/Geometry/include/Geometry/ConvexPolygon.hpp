@@ -2,6 +2,7 @@
 
 #include <Geometry/LineSegment.hpp>
 
+#include <opencv2/core/core.hpp>
 #include <Eigen/Dense>
 
 #include <numeric>
@@ -100,7 +101,7 @@ bool operator==(
 
 template<class NumericType>
 Eigen::Matrix<NumericType, Eigen::Dynamic, Eigen::Dynamic>
-makePolygonIntersectionGrid(
+makePolygonIntersectionEigenGrid(
     const std::vector<ConvexPolygon<NumericType>> &polygons,
     std::size_t gridRows,
     std::size_t gridCols)
@@ -123,5 +124,32 @@ makePolygonIntersectionGrid(
 
     return mask;
 }
+
+
+template<class PolygonNumericType, class MatNumericType>
+void makePolygonIntersectionOpencvGrid(
+    const std::vector<ConvexPolygon<PolygonNumericType>> &polygons,
+    std::size_t gridRows,
+    std::size_t gridCols,
+    cv::Mat_<MatNumericType> &output)
+{
+    cv::Mat_<MatNumericType> mask(gridRows, gridCols);
+
+    for (std::size_t r = 0; r < gridRows; ++r)
+    {
+        for (std::size_t c = 0; c < gridCols; ++c)
+        {
+            bool containment = true;
+            for (const auto &polygon : polygons)
+            {
+                containment &= polygon.isPointContained(Eigen::Vector2d{c, gridRows-r-1});
+            }
+            mask(r, c) = static_cast<MatNumericType>(containment);
+        }
+    }
+
+    output = mask;
+}
+
 
 } // end namespace pcv
