@@ -156,7 +156,14 @@ cv::Mat distortSourceToMatchTarget(
         correspondences.push_back({sourceRansacInliers[i], targetRansacInliers[i]});
     }
 
-    auto eigenHomography = pcv::findHomographyWithRansac(correspondences, 3.0, 52980);
+    auto eigenHomography = pcv::Ransac<std::pair<cv::Point2f, cv::Point2f>, Eigen::Matrix3d>(
+        correspondences,
+        pcv::findHomographyWithDirectLinearTransform<float>,
+        4,
+        pcv::getReprojectionError<float>,
+        3.0,
+        52980);
+
     cv::Mat homography = eigenToCv(eigenHomography);
 
     // Find the bounds and translation vector necessary to align the sourceImage
