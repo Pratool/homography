@@ -1,3 +1,4 @@
+#include <Solvers/Image.hpp>
 #include <Solvers/Ransac.hpp>
 
 #include <ceres/ceres.h>

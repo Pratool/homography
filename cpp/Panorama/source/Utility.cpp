@@ -14,6 +14,7 @@
 #include <opencv2/opencv.hpp>
 
 #include <Geometry/ConvexPolygon.hpp>
+#include <Solvers/Image.hpp>
 #include <Solvers/Ransac.hpp>
 
 #include "Panorama/Utility.hpp"
