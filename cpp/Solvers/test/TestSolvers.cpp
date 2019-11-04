@@ -1,4 +1,5 @@
 #include <Solvers/Image.hpp>
+#include <Solvers/Line.hpp>
 #include <Solvers/Ransac.hpp>
 
 #include <ceres/ceres.h>
@@ -113,6 +114,29 @@ TEST(FindHomography, LeastSquares)
             ASSERT_NEAR(dltResult(i,ii), leastSquaresResult(i,ii), 1e-12);
         }
     }
+}
+
+
+TEST(Ransac, BestFitLine)
+{
+    std::vector<Eigen::Vector2d> points;
+    points.emplace_back(Eigen::Vector2d({0.0, 2.0}));
+    points.emplace_back(Eigen::Vector2d({2.0, 8.0}));
+    points.emplace_back(Eigen::Vector2d({4.0, 5.5}));
+    points.emplace_back(Eigen::Vector2d({6.0, 6.2}));
+
+    auto eigenModel = pcv::Ransac<Eigen::Vector2d, Eigen::Vector2d>(
+        points,
+        pcv::findLineModelFromPoints<double>,
+        2,
+        pcv::getLineModelError<double>,
+        1e-4,
+        52980);
+
+    // Assumption here is that after 52981 iterations, an optimal solution will
+    // be found with Ransac. The optimal line goes through (0, 2) and (4, 5.5).
+    ASSERT_NEAR(eigenModel[0], -0.4375, 1e-12);
+    ASSERT_NEAR(eigenModel[1], 0.5, 1e-12);
 }
 
 
