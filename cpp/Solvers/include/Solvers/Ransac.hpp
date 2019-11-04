@@ -34,11 +34,21 @@ Ransac(
     for (std::size_t iteration = 0; iteration < iterations+1; ++iteration)
     {
         std::vector<DataType> tmpInliers;
-        for (std::size_t minDataIter = 0; minDataIter < 4; ++minDataIter)
+        std::vector<std::size_t> usedIndices(dataPointsRequiredByModel);
+        for (std::size_t minDataIter = 0; minDataIter < dataPointsRequiredByModel; ++minDataIter)
         {
-            std::uniform_int_distribution<std::size_t> indexRandomizer(0, data.size());
+            std::uniform_int_distribution<std::size_t> indexRandomizer(0, data.size()-minDataIter);
             std::random_device randomDevice;
-            tmpInliers.push_back(data[indexRandomizer(randomDevice)]);
+            usedIndices[minDataIter] = indexRandomizer(randomDevice);
+            for (std::size_t i = 0; i < minDataIter; ++i)
+            {
+                if (usedIndices[minDataIter] == usedIndices[i])
+                {
+                    ++usedIndices[minDataIter];
+                }
+            }
+
+            tmpInliers.push_back(data[usedIndices[minDataIter]]);
         }
 
         auto tmpModel = modelingFunction(tmpInliers);
