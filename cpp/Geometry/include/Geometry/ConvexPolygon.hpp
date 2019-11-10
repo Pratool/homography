@@ -36,6 +36,11 @@ SignedNumericType getTwiceSignedArea2D(
 }
 
 
+/**
+ * \class ConvexPolygon
+ * Create a polygon by specifying its vertices in a clockwise direction. Points
+ * are 2D Eigen::Vectors.
+ */
 template<class NumericType>
 class ConvexPolygon
 {
@@ -43,7 +48,24 @@ public:
     ConvexPolygon() = default;
 
 
+    ConvexPolygon(const ConvexPolygon &polygon) = default;
+
+
+    /**
+     * Move construction leverages std::vector's move constructor.
+     */
+    ConvexPolygon(ConvexPolygon &&polygon) = default;
+
+
     ~ConvexPolygon() = default;
+
+
+    ConvexPolygon(const std::vector<NumericType> &vertices) : vertices(vertices)
+    {}
+
+
+    ConvexPolygon(std::vector<NumericType> &&vertices) : vertices(vertices)
+    {}
 
 
     void addVertex(Eigen::Matrix<NumericType, 2, 1> &&vertex)
@@ -64,6 +86,14 @@ public:
     }
 
 
+    /**
+     * Determine if a given point is inside or outside the polygon in O(n) where
+     * n is the number of vertices of the polygon. This function requires a
+     * point to be represented as two doubles, even if the points can be
+     * represented with integers or the polygon has a non-floating point
+     * templated NumericType. The current implementation does not account for
+     * floating-point error.
+     */
     bool isPointContained(Eigen::Vector2d testPoint) const
     {
         auto cachedVertex = vertices.back();
@@ -90,6 +120,9 @@ private:
 };
 
 
+/**
+ * An O(n) operation where n is the max of the two polygon's number of vertices.
+ */
 template<class NumericType>
 bool operator==(
     const ConvexPolygon<NumericType> &lhs,
@@ -106,6 +139,9 @@ makePolygonIntersectionEigenGrid(
     std::size_t gridRows,
     std::size_t gridCols)
 {
+    static_assert(std::is_arithmetic<NumericType>::value,
+                  "Must have numerical polygon type.");
+
     Eigen::Matrix<NumericType, Eigen::Dynamic, Eigen::Dynamic> mask =
         Eigen::Matrix<NumericType, Eigen::Dynamic, Eigen::Dynamic>::Zero(gridRows, gridCols);
 
