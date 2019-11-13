@@ -94,31 +94,73 @@ public:
      * templated NumericType. The current implementation does not account for
      * floating-point error.
      */
-    bool isPointContained(Eigen::Vector2d testPoint) const
-    {
-        auto cachedVertex = vertices.back();
+    bool isPointContained(Eigen::Vector2d testPoint) const;
 
-        return std::accumulate(
-            std::cbegin(vertices),
-            std::cend(vertices),
-            true,
-            [&cachedVertex, testPoint](bool isContained, decltype(cachedVertex) vertexIter)
-            {
-                isContained &=
-                    getTwiceSignedArea2D(
-                        static_cast<Eigen::Vector2d>(cachedVertex.template cast<double>()),
-                        static_cast<Eigen::Vector2d>(vertexIter.template cast<double>()),
-                        testPoint) <= 0;
-
-                cachedVertex = vertexIter;
-                return isContained;
-            });
-    }
+    /**
+     * Constructs a ConvexPolygon representing the minimum size rectangle with
+     * sides perpendicular and parallel to the x-axis that completely encompasses
+     * all points in the polygon.
+     */
+    ConvexPolygon<NumericType> getBoundingBox() const;
 
 private:
     std::vector<Eigen::Matrix<NumericType, 2, 1>> vertices;
 };
 
+template<class NumericType>
+bool ConvexPolygon<NumericType>::isPointContained(
+    Eigen::Vector2d testPoint) const
+{
+    auto cachedVertex = vertices.back();
+
+    return std::accumulate(
+        std::cbegin(vertices),
+        std::cend(vertices),
+        true,
+        [&cachedVertex, testPoint](bool isContained, decltype(cachedVertex) vertexIter)
+        {
+            isContained &=
+                getTwiceSignedArea2D(
+                    static_cast<Eigen::Vector2d>(cachedVertex.template cast<double>()),
+                    static_cast<Eigen::Vector2d>(vertexIter.template cast<double>()),
+                    testPoint) <= 0;
+
+            cachedVertex = vertexIter;
+            return isContained;
+        });
+}
+
+template<class NumericType>
+ConvexPolygon<NumericType> ConvexPolygon<NumericType>::getBoundingBox() const
+{
+    NumericType minX = vertices[0].x();
+    NumericType minY = vertices[0].y();
+    NumericType maxX = vertices[0].x();
+    NumericType maxY = vertices[0].y();
+
+    // Start iterator one after the beginning.
+    const auto vertex = vertices.cbegin();
+    std::advance(vertices, 1);
+    for(; vertex != std::cend(vertex); std::next(vertex))
+    {
+        minX = std::min(vertex.x(), minX);
+        minY = std::min(vertex.y(), minY);
+        maxX = std::max(vertex.x(), maxX);
+        maxY = std::max(vertex.y(), maxY);
+    }
+
+    ConvexPolygon<NumericType> output;
+    output.addVertex(Eigen::Matrix<NumericType, Eigen::Dynamic, Eigen::Dynamic>{
+        minX, minY});
+    output.addVertex(Eigen::Matrix<NumericType, Eigen::Dynamic, Eigen::Dynamic>{
+        minX, maxY});
+    output.addVertex(Eigen::Matrix<NumericType, Eigen::Dynamic, Eigen::Dynamic>{
+        maxX, maxY});
+    output.addVertex(Eigen::Matrix<NumericType, Eigen::Dynamic, Eigen::Dynamic>{
+        maxX, minY});
+
+    return output;
+}
 
 /**
  * An O(n) operation where n is the max of the two polygon's number of vertices.
