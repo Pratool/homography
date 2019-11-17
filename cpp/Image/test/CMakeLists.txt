@@ -4,6 +4,7 @@ add_executable(testimage
     ${CMAKE_CURRENT_SOURCE_DIR}/TestImage.cpp)
 
 target_link_libraries(testimage
+    Geometry
     Image)
 
 install(TARGETS testimage

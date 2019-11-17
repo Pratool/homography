@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Geometry/ConvexPolygon.hpp>
+
 #include <Eigen/Dense>
 #include <opencv2/core/core.hpp>
 #include <opencv2/core/eigen.hpp>
@@ -54,6 +56,13 @@ public:
      */
     void write(const std::filesystem::path &savePath);
 
+    /**
+     * Crop the image to any polygon specified while retaining the original
+     * image size.
+     */
+    template<class NumericType>
+    void crop(const ConvexPolygon<NumericType> &polygon);
+
 private:
     std::array<
         Eigen::Matrix<BitDepth, Eigen::Dynamic, Eigen::Dynamic>,
@@ -100,6 +109,34 @@ inline void Image<BitDepth, ChannelNumber>::write(
     cv::Mat output;
     cv::merge(channels.data(), 3, output);
     cv::imwrite(savePath.native(), output);
+}
+
+template<class BitDepth, std::size_t ChannelNumber>
+template<class NumericType>
+inline void Image<BitDepth, ChannelNumber>::crop(
+    const ConvexPolygon<NumericType> &polygon)
+{
+    decltype(matrices) matrixBuffers{};
+
+    std::transform(
+        std::cbegin(matrices), std::cend(matrices), std::begin(matrixBuffers),
+        [&polygon](const Eigen::Matrix<BitDepth, Eigen::Dynamic, Eigen::Dynamic> &tmp)
+        {
+            auto channel = tmp;
+            for (auto r = 0; r < channel.rows(); ++r)
+            {
+                for (auto c = 0; c < channel.cols(); ++c)
+                {
+                    if (! polygon.isPointContained(Eigen::Vector2d({r, c})))
+                    {
+                        channel(r, c) = 0;
+                    }
+                }
+            }
+            return channel;
+        });
+
+    matrices = std::move(matrixBuffers);
 }
 
 }
