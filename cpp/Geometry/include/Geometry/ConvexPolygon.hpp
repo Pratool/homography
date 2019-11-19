@@ -103,6 +103,13 @@ public:
      */
     ConvexPolygon<NumericType> getBoundingBox() const;
 
+    /**
+     * Transforms the polygon in-place with a 3x3 homographic transformation
+     * matrix. Can only transform floating-point vertex definitions of polygons.
+     * This method is not thread-safe.
+     */
+    void transform(const Eigen::Matrix3d &transform);
+
 private:
     std::vector<Eigen::Matrix<NumericType, 2, 1>> vertices;
 };
@@ -149,6 +156,7 @@ ConvexPolygon<NumericType> ConvexPolygon<NumericType>::getBoundingBox() const
         maxY = std::max(vertex.y(), maxY);
     }
 
+    // This is weird, the size is not dynamic, it's 2 because the points are 2D.
     ConvexPolygon<NumericType> output;
     output.addVertex(Eigen::Matrix<NumericType, Eigen::Dynamic, Eigen::Dynamic>{
         minX, minY});
@@ -229,5 +237,31 @@ void makePolygonIntersectionOpencvGrid(
     output = mask;
 }
 
+template<class NumericType>
+inline void ConvexPolygon<NumericType>::transform(const Eigen::Matrix3d &transformMatrix)
+{
+    static_assert(std::is_floating_point<NumericType>::value,
+                  "Can only perform in-place transformations with floating-point"
+                  " polygons.");
+
+    const auto &tform = transformMatrix;
+    std::transform(
+        std::begin(vertices), std::end(vertices), std::begin(vertices),
+        [tform](decltype(vertices[0]) vertex)
+        {
+            Eigen::Matrix<NumericType, 3, 1> homogenousVertex;
+            homogenousVertex << vertex[0], vertex[1], 1;
+
+            Eigen::Matrix<NumericType, 3, 1> homogenousNewVertex =
+                tform * homogenousVertex;
+
+            Eigen::Matrix<NumericType, 2, 1> newVertex;
+            newVertex << homogenousNewVertex[0], homogenousNewVertex[1];
+
+            // Bring back to pixel coordinates.
+            newVertex /= homogenousNewVertex[2];
+            return newVertex;
+        });
+}
 
 } // end namespace pcv

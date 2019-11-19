@@ -122,6 +122,42 @@ TEST(ConvexPolygon, RasterizeToOpenCV)
     ASSERT_TRUE(cv::countNonZero(diff) == 0);
 }
 
+
+TEST(ConvexPolygon, Transform)
+{
+    using namespace pcv;
+    using namespace Eigen;
+
+    ConvexPolygon<double> polygon{};
+
+    polygon.addVertex(Vector2d{0, 0});
+    polygon.addVertex(Vector2d{1.5, 2});
+    polygon.addVertex(Vector2d{3.5, 2});
+    polygon.addVertex(Vector2d{3.5, 0});
+
+    Matrix3d transform;
+    transform <<
+        2.0, 0.0, 1.0,
+        0.0, 2.0, 3.0,
+        0.0, 0.0, 2.0;
+
+    polygon.transform(transform);
+    const auto vertices = polygon.getVertices();
+
+    ASSERT_DOUBLE_EQ(vertices[0].x(), 0.5);
+    ASSERT_DOUBLE_EQ(vertices[0].y(), 1.5);
+
+    ASSERT_DOUBLE_EQ(vertices[1].x(), 2.0);
+    ASSERT_DOUBLE_EQ(vertices[1].y(), 3.5);
+
+    ASSERT_DOUBLE_EQ(vertices[2].x(), 4.0);
+    ASSERT_DOUBLE_EQ(vertices[2].y(), 3.5);
+
+    ASSERT_DOUBLE_EQ(vertices[3].x(), 4.0);
+    ASSERT_DOUBLE_EQ(vertices[3].y(), 1.5);
+}
+
+
 TEST(LineSegment, Intersection)
 {
     using namespace pcv;
