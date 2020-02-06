@@ -63,6 +63,24 @@ public:
     template<class NumericType>
     void crop(const ConvexPolygon<NumericType> &polygon);
 
+    /**
+     * Draw a polygon onto the image. Will overwrite the image held in memory.
+     * This is a very slow function and meant for debugging purposes only.
+     */
+    template<class NumericType>
+    void drawPolygon(const ConvexPolygon<NumericType> &polygon);
+
+    /**
+     * Will keep the transformed image "within frame" -- meaning it will
+     * increase (but never decrease) the rasterization frame size to include
+     * the full transformed image. This may require using a transformation
+     * different from the one intended by the caller, often by a translation to
+     * keep the transformed image's bounding box only in positive pixel
+     * coordinates. This function will return the actual transformation applied,
+     * leaving the caller with complete information to deduce what happened.
+     */
+    Eigen::Matrix3d transform(const Eigen::Matrix3d &transform);
+
 private:
     std::array<
         Eigen::Matrix<BitDepth, Eigen::Dynamic, Eigen::Dynamic>,
@@ -137,6 +155,45 @@ inline void Image<BitDepth, ChannelNumber>::crop(
         });
 
     matrices = std::move(matrixBuffers);
+}
+
+template<class BitDepth, std::size_t ChannelNumber>
+template<class NumericType>
+inline void Image<BitDepth, ChannelNumber>::drawPolygon(
+    const ConvexPolygon<NumericType> &polygon)
+{
+    decltype(matrices) matrixBuffers{};
+
+    std::transform(
+        std::cbegin(matrices), std::cend(matrices), std::begin(matrixBuffers),
+        [&polygon](const Eigen::Matrix<BitDepth, Eigen::Dynamic, Eigen::Dynamic> &tmp)
+        {
+            auto channel = tmp;
+            for (auto r = 0; r < channel.rows(); ++r)
+            {
+                for (auto c = 0; c < channel.cols(); ++c)
+                {
+                    if (polygon.isPointContained(Eigen::Vector2d({r, c})))
+                    {
+                        channel(r, c) = 0;
+                    }
+                }
+            }
+            return channel;
+        });
+
+    matrices = std::move(matrixBuffers);
+}
+
+template<class BitDepth, std::size_t ChannelNumber>
+inline Eigen::Matrix3d transform(const Eigen::Matrix3d &transform)
+{
+    // Transform the bounding box (represented as a convex poly.) to get new
+    // transformed poly. Get new transformed poly's bounding box size and
+    // top-left corner to potentially add a translation on top of the transform
+    // or allocate more memory to this->matrices due to increased bounding box
+    // size. Don't need to worry about decreasing memory usage if the image
+    // shrinks -- for now.
 }
 
 }

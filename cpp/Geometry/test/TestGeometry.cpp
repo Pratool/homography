@@ -175,6 +175,31 @@ TEST(LineSegment, Intersection)
 }
 
 
+TEST(ConvexPolygon, Intersection)
+{
+    using namespace pcv;
+    using namespace Eigen;
+
+    ConvexPolygon<double> polygonA{};
+    polygonA.addVertex(Vector2d{5, 14});
+    polygonA.addVertex(Vector2d{9, 8});
+    polygonA.addVertex(Vector2d{5, 3});
+    polygonA.addVertex(Vector2d{1, 7});
+
+    ConvexPolygon<double> polygonB{};
+    polygonB.addVertex(Vector2d{9, 14});
+    polygonB.addVertex(Vector2d{13, 9});
+    polygonB.addVertex(Vector2d{9, 4});
+    polygonB.addVertex(Vector2d{6, 9});
+
+    auto res = polygonA.getIntersectionWith(polygonB);
+
+    for (const auto &i : res.getVertices())
+    {
+        std::clog << i << std::endl << std::endl;
+    }
+}
+
 int main(int argc, char** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);

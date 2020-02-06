@@ -60,11 +60,11 @@ public:
     ~ConvexPolygon() = default;
 
 
-    ConvexPolygon(const std::vector<NumericType> &vertices) : vertices(vertices)
+    ConvexPolygon(const std::vector<Eigen::Matrix<NumericType, 2, 1>> &vertices) : vertices(vertices)
     {}
 
 
-    ConvexPolygon(std::vector<NumericType> &&vertices) : vertices(vertices)
+    ConvexPolygon(std::vector<Eigen::Matrix<NumericType, 2, 1>> &&vertices) : vertices(vertices)
     {}
 
 
@@ -110,9 +110,54 @@ public:
      */
     void transform(const Eigen::Matrix3d &transform);
 
+    /**
+     * Get the ConvexPolygon that bounds the intersection of the polygons. The
+     * public interface makes no runtime performance guarantee!
+     */
+    ConvexPolygon<double> getIntersectionWith(
+            const ConvexPolygon<NumericType> &rhsPoly) const;
+
 private:
     std::vector<Eigen::Matrix<NumericType, 2, 1>> vertices;
 };
+
+/**
+ * Need to use another template parameter for rhsPoly's numeric type.
+ */
+template<class NumericType>
+ConvexPolygon<double> ConvexPolygon<NumericType>::getIntersectionWith(
+        const ConvexPolygon<NumericType> &rhsPoly) const
+{
+    const auto rhsVertices = rhsPoly.getVertices();
+    auto rhsPrevVertex = rhsVertices.back();
+    auto lhsPrevVertex = vertices.back();
+
+    ConvexPolygon<double> intersection(
+        std::accumulate(
+            std::cbegin(vertices),
+            std::cend(vertices),
+            std::vector<Eigen::Vector2d>{},
+            [&lhsPrevVertex, &rhsPrevVertex, &rhsVertices](
+                std::vector<Eigen::Vector2d> accumulator,
+                decltype(lhsPrevVertex) lhsVertexIter)
+            {
+                for (const auto &rhsVertexIter : rhsVertices)
+                {
+                    auto intersection = getSegmentIntersectionPoint2(
+                        lhsPrevVertex, lhsVertexIter, rhsPrevVertex, rhsVertexIter);
+                    if (intersection)
+                    {
+                        accumulator.emplace_back(*intersection);
+                    }
+                    rhsPrevVertex = rhsVertexIter;
+                }
+
+                lhsPrevVertex = lhsVertexIter;
+                return accumulator;
+            }));
+
+    return intersection;
+}
 
 template<class NumericType>
 bool ConvexPolygon<NumericType>::isPointContained(
