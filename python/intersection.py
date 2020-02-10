@@ -11,14 +11,19 @@ import numpy as np
 
 from matplotlib import pyplot as plt
 
+
 def main():
-    quad0 = Polygon( [(5,14), (9,8), (5,3), (1,7)] )
-    quad1 = Polygon( [(9,14), (13,9), (9,4), (6,9)] )
+    quad0 = Polygon([(5, 14), (9, 8), (5, 3), (1, 7)])
+    quad1 = Polygon([(9, 14), (13, 9), (9, 4), (6, 9)])
 
-    poly0 = Polygon( [(18,76), (45, 91), (91,69), (43, 13), (21, 23)] )
-    poly1 = Polygon( [(76,92), (88,74), (89, 57), (45, 9), (36, 80)] )
+    poly0 = Polygon([(18, 76), (45, 91), (91, 69), (43, 13), (21, 23)])
+    poly1 = Polygon([(76, 92), (88, 74), (89, 57), (45, 9), (36, 80)])
 
-    run_and_plot(poly1, poly0)
+    print(quad0.get_top_vertex())
+    print(quad0.get_bottom_vertex())
+
+    #run_and_plot(poly1, poly0)
+
 
 def run_and_plot(poly0, poly1):
     ax = plt.gca()
@@ -27,15 +32,19 @@ def run_and_plot(poly0, poly1):
     intersect_polys(poly0, poly1).plot(ax)
     plt.show()
 
+
 def gen_random_poly(number_of_vertices):
     # Note that this result will not be convex.
-    return Polygon([ (int(random()*100),int(random()*100)) for i in range(number_of_vertices) ])
+    return Polygon([(int(random() * 100), int(random() * 100))
+                    for i in range(number_of_vertices)])
+
 
 class Vertex:
+
     def __init__(self, x, y, prev=None, next=None):
         self.x = x
         self.y = y
-        self.coord = (x,y)
+        self.coord = (x, y)
         self.prev = prev
         self.next = next
 
@@ -47,13 +56,14 @@ class Vertex:
         self.next = next
 
     def __repr__(self):
-        return '{}->{}->{}'.format(
-            str(self.prev), str(self), str(self.next))
+        return '{}->{}->{}'.format(str(self.prev), str(self), str(self.next))
 
     def __str__(self):
         return str(self.coord)
 
+
 class Polygon:
+
     def __init__(self, vertices):
         self.vertices = []
 
@@ -61,8 +71,10 @@ class Polygon:
             self.vertices.append(Vertex(v))
 
         for i in range(len(self.vertices)):
-            self.vertices[i-1].next = self.vertices[i]
-            self.vertices[i].prev = self.vertices[i-1]
+            self.vertices[i - 1].next = self.vertices[i]
+            self.vertices[i].prev = self.vertices[i - 1]
+
+        self.c = 0
 
     def __repr__(self):
         return '->'.join([str(v) for v in self.vertices])
@@ -73,14 +85,83 @@ class Polygon:
         mplib_axes.plot(xs, ys, 'o-')
         return mplib_axes
 
+    def _search_vertex(self, comparator, start=0, end=None):
+        """Retrieve vertex to exploit convexity within the polygon's vertex
+        search space. Will use start and end as index values and search in the
+        interval [start, end].
+
+        Args:
+            self: Polygon in question.
+            comparator: Function that compares the middle vertex with its
+                neighbors. Must return a boolean value.
+            start: Index into vertex array to begin search.
+            end: Index into vertex array to end search.
+
+        Returns:
+            Reference to vertex within vertex array.
+        """
+        if end is None:
+            end = start + len(self.vertices) - 1
+
+        if start == end:
+            return self.vertices[start]
+        if start - end == 1:
+            #if self.vertices[start].y > self.vertices[end].y:
+            if comparator(self.vertices[start], self.vertices[end]):
+                return self.vertices[start]
+            else:
+                return self.vertices[end]
+
+        mid = start + int((end - start) / 2.0)
+        mid_vtx = self.vertices[mid]
+        after_mid_vtx = self.vertices[mid + 1]
+        before_mid_vtx = self.vertices[mid - 1]
+
+        #if after_mid_vtx.y > mid_vtx.y:
+        if comparator(after_mid_vtx, mid_vtx):
+            return self._search_vertex(comparator, start=mid + 1, end=end)
+        #elif before_mid_vtx.y > mid_vtx.y:
+        elif comparator(before_mid_vtx, mid_vtx):
+            return self._search_vertex(comparator, start=start, end=mid - 1)
+        else:
+            return mid_vtx
+
+    def get_top_vertex(self):
+        """Retrieve vertex with the max y-value of all vertices in polygon.
+        Will use start and end as index values and search in the interval
+        [start, end].
+
+        Args:
+            self: Polygon in question.
+            start: Index into vertex array to begin search.
+            end: Index into vertex array to end search.
+
+        Returns:
+            Reference to vertex within vertex array.
+        """
+        return self._search_vertex(lambda x, y: x.y > y.y)
+
+    def get_bottom_vertex(self):
+        """Retrieve vertex with the min y-value of all vertices in polygon.
+        Will use start and end as index values and search in the interval
+        [start, end].
+
+        Args:
+            self: Polygon in question.
+            start: Index into vertex array to begin search.
+            end: Index into vertex array to end search.
+
+        Returns:
+            Reference to vertex within vertex array.
+        """
+        return self._search_vertex(lambda x, y: x.y < y.y)
+
+
 def line_intersect(p0, p1, p2, p3):
-    lhs = np.array([
-        [p0.y-p1.y, p1.x-p0.x],
-        [p2.y-p3.y, p3.x-p2.x]
-    ])
+    lhs = np.array([[p0.y - p1.y, p1.x - p0.x], [p2.y - p3.y, p3.x - p2.x]])
     rhs = np.array([
-        p0.y * (p1.x-p0.x) - p0.x * (p1.y-p0.y),
-        p2.y * (p3.x-p2.x) - p2.x * (p3.y-p2.y)
+        p0.y * (p1.x - p0.x) - p0.x * (p1.y - p0.y),
+        p2.y * (p3.x - p2.x) - p2.x * (p3.y - p2.y)
     ])
 
     try:
@@ -104,17 +185,42 @@ def line_intersect(p0, p1, p2, p3):
             x <= max(p2.x, p3.x)+err and \
             y >= min(p2.y, p3.y)-err and \
             y <= max(p2.y, p3.y)+err:
-        return (x,y)
+        return (x, y)
 
     return None
 
 
-pt_eq = lambda pt0, pt1: (abs(pt0.x-pt1.x) < 1e-9) and (abs(pt0.y-pt1.y) < 1e-9)
+pt_eq = lambda pt0, pt1: (abs(pt0.x - pt1.x) < 1e-9) and (abs(pt0.y - pt1.y) <
+                                                          1e-9)
 or_op = lambda x, y: x or y
 and_op = lambda x, y: x and y
-pt_vertices = lambda pt, vertices: reduce(or_op, [pt_eq(pt, Vertex(v)) for v in vertices]) if len(vertices) > 0 else False
-is_left = lambda pt, v0, v1: ((v0.x-pt.x)*(v1.y-pt.y) - (v0.y-pt.y)*(v1.x-pt.x)) < 0
-is_inside = lambda pt, poly: reduce(and_op, [is_left(pt, poly.vertices[i-1], poly.vertices[i]) for i in range(len(poly.vertices))])
+pt_vertices = lambda pt, vertices: reduce(
+    or_op, [pt_eq(pt, Vertex(v))
+            for v in vertices]) if len(vertices) > 0 else False
+is_left = lambda pt, v0, v1: ((v0.x - pt.x) * (v1.y - pt.y) - (v0.y - pt.y) *
+                              (v1.x - pt.x)) < 0
+is_inside = lambda pt, poly: reduce(and_op, [
+    is_left(pt, poly.vertices[i - 1], poly.vertices[i])
+    for i in range(len(poly.vertices))
+])
+
+
+def is_inside_lgn(point, polygon):
+    """Determines if a point lies inside a convex polygon.
+
+    Args:
+        point: A Vertex object representing 2D point to query polygon for
+            inclusion truth.
+        polygon: A Polygon object which provides bounds to which insidedness is
+            concerned.
+
+    Returns:
+        Boolean value where True indicates the point is inside the polygon.
+    """
+    # Search for top-most and bottom-most points, which must exist in convex
+    # polygons by definition.
+    pass
+
 
 def intersect_polys(poly0, poly1):
     inter = []
@@ -122,7 +228,7 @@ def intersect_polys(poly0, poly1):
     poly0v = poly0.vertices[0]
     poly1v = poly1.vertices[0]
 
-    max_iters = 2*(len(poly0.vertices)+len(poly1.vertices))
+    max_iters = 2 * (len(poly0.vertices) + len(poly1.vertices))
     c = 0
 
     while True:
@@ -138,7 +244,9 @@ def intersect_polys(poly0, poly1):
                 tmp_inters.append((tmp_inter[0], tmp_inter[1], p1v.next))
 
         # sort by euclidean distance from poly0v
-        tmp_inters = sorted(tmp_inters, key=lambda x: (poly0v.x-x[0])**2 + (poly0v.y-x[1])**2)
+        tmp_inters = sorted(tmp_inters,
+                            key=lambda x: (poly0v.x - x[0])**2 +
+                            (poly0v.y - x[1])**2)
 
         broke = False
         for i in tmp_inters:
@@ -161,11 +269,12 @@ def intersect_polys(poly0, poly1):
         if len(tmp_inters) == 0:
             poly0v = poly0v.next
 
-        c+=1
+        c += 1
         if c > max_iters:
             raise RuntimeError('You found a bug!')
 
     return Polygon(inter)
+
 
 if __name__ == '__main__':
     main()
