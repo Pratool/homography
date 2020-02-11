@@ -19,22 +19,33 @@ def main():
     poly0 = Polygon([(18, 76), (45, 91), (91, 69), (43, 13), (21, 23)])
     poly1 = Polygon([(76, 92), (88, 74), (89, 57), (45, 9), (36, 80)])
 
-    print(quad0.get_top_vertex())
-    print(quad0.get_bottom_vertex())
+    mismatches = []
+    # Compare straight-forward O(n) implementation with O(lg(n)) implementation.
+    grid_size = 10
+    for x in range(0, 15*grid_size, 1):
+        for y in range(0, 15*grid_size, 1):
+            pt = Vertex((x/float(grid_size), y/float(grid_size)))
+            res = is_inside(pt, quad0)
+            res2 = is_inside_n2(pt, quad0)
+            if res != res2:
+                mismatches.append((pt, res, res2))
+    print(len(mismatches))
 
-    #run_and_plot(poly1, poly0)
+    run_and_plot(quad0, quad1)
+    run_and_plot(poly0, poly1)
+
 
 
 def run_and_plot(poly0, poly1):
     ax = plt.gca()
     poly0.plot(ax)
     poly1.plot(ax)
-    intersect_polys(poly0, poly1).plot(ax)
+    intersect_polys(poly0, poly1, is_inside).plot(ax)
     plt.show()
 
 
 def gen_random_poly(number_of_vertices):
-    # Note that this result will not be convex.
+    # Note that this result is not necessarily convex.
     return Polygon([(int(random() * 100), int(random() * 100))
                     for i in range(number_of_vertices)])
 
@@ -106,7 +117,6 @@ class Polygon:
         if start == end:
             return self.vertices[start]
         if start - end == 1:
-            #if self.vertices[start].y > self.vertices[end].y:
             if comparator(self.vertices[start], self.vertices[end]):
                 return self.vertices[start]
             else:
@@ -117,10 +127,8 @@ class Polygon:
         after_mid_vtx = self.vertices[mid + 1]
         before_mid_vtx = self.vertices[mid - 1]
 
-        #if after_mid_vtx.y > mid_vtx.y:
         if comparator(after_mid_vtx, mid_vtx):
             return self._search_vertex(comparator, start=mid + 1, end=end)
-        #elif before_mid_vtx.y > mid_vtx.y:
         elif comparator(before_mid_vtx, mid_vtx):
             return self._search_vertex(comparator, start=start, end=mid - 1)
         else:
@@ -156,8 +164,27 @@ class Polygon:
         """
         return self._search_vertex(lambda x, y: x.y < y.y)
 
+    def get_right_side(self):
+        bottom = self.get_bottom_vertex()
+        tmp = self.get_top_vertex()
+        side = []
+        while tmp != bottom:
+            side.append(tmp)
+            tmp = tmp.next
+        side.append(tmp)
+        return side
 
-def line_intersect(p0, p1, p2, p3):
+    def get_left_side(self):
+        top = self.get_top_vertex()
+        tmp = self.get_bottom_vertex()
+        side = []
+        while tmp != top:
+            side.append(tmp)
+            tmp = tmp.next
+        side.append(tmp)
+        return side
+
+def line_intersect(p0, p1, p2, p3, err=0):
     lhs = np.array([[p0.y - p1.y, p1.x - p0.x], [p2.y - p3.y, p3.x - p2.x]])
     rhs = np.array([
         p0.y * (p1.x - p0.x) - p0.x * (p1.y - p0.y),
@@ -174,8 +201,6 @@ def line_intersect(p0, p1, p2, p3):
 
     x = res[0]
     y = res[1]
-
-    err = 1e-9
 
     if x >= min(p0.x, p1.x)-err and \
             x <= max(p0.x, p1.x)+err and \
@@ -198,14 +223,14 @@ pt_vertices = lambda pt, vertices: reduce(
     or_op, [pt_eq(pt, Vertex(v))
             for v in vertices]) if len(vertices) > 0 else False
 is_left = lambda pt, v0, v1: ((v0.x - pt.x) * (v1.y - pt.y) - (v0.y - pt.y) *
-                              (v1.x - pt.x)) < 0
-is_inside = lambda pt, poly: reduce(and_op, [
+                              (v1.x - pt.x)) <= 0
+is_inside_n2 = lambda pt, poly: reduce(and_op, [
     is_left(pt, poly.vertices[i - 1], poly.vertices[i])
     for i in range(len(poly.vertices))
 ])
 
 
-def is_inside_lgn(point, polygon):
+def is_inside(point, polygon, side=None, start=0, end=None):
     """Determines if a point lies inside a convex polygon.
 
     Args:
@@ -217,12 +242,39 @@ def is_inside_lgn(point, polygon):
     Returns:
         Boolean value where True indicates the point is inside the polygon.
     """
-    # Search for top-most and bottom-most points, which must exist in convex
-    # polygons by definition.
-    pass
+    if side is None:
+        res = True
 
+        left_side = polygon.get_left_side()
+        right_side = polygon.get_right_side()
+        a = is_inside(point, polygon, side=left_side)
+        b = is_inside(point, polygon, side=right_side[::-1])
+        b = len(right_side)-1-b
 
-def intersect_polys(poly0, poly1):
+        return (is_left(point, left_side[a], left_side[a].next) and
+                is_left(point, right_side[b].prev, right_side[b]))
+
+    if end is None:
+        end = len(side)-1
+
+    if start == end:
+        return start
+    if start-end == 1:
+        return start
+
+    mid = start+int((end-start)/2.0)
+    mid_vtx = side[mid]
+    before_mid_vtx = side[mid-1]
+    after_mid_vtx = side[mid+1]
+
+    if point.y > mid_vtx.y  and point.y <= after_mid_vtx.y:
+        return mid
+    elif point.y > mid_vtx.y:
+        return is_inside(point, polygon, side=side, start=mid+1, end=end)
+    else:
+        return is_inside(point, polygon, side=side, start=start, end=mid-1)
+
+def intersect_polys(poly0, poly1, is_inside=is_inside_n2):
     inter = []
 
     poly0v = poly0.vertices[0]
