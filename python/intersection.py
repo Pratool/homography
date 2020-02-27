@@ -23,8 +23,11 @@ def main():
 
     run_and_plot(quad0, quad1)
     run_and_plot(poly0, poly1)
-    run_and_plot(gen_random_convex_poly(11),
-                 gen_random_convex_poly(10))
+
+    for i in range(10):
+        run_and_plot(gen_random_convex_poly(11), gen_random_convex_poly(10))
+
+    run_and_plot(gen_random_convex_poly(111), gen_random_convex_poly(120))
 
 
 def find_mismatches():
@@ -32,9 +35,9 @@ def find_mismatches():
     mismatches = []
     # Compare straight-forward O(n) implementation with O(lg(n)) implementation.
     grid_size = 10
-    for x in range(0, 15*grid_size, 1):
-        for y in range(0, 15*grid_size, 1):
-            pt = Vertex((x/float(grid_size), y/float(grid_size)))
+    for x in range(0, 15 * grid_size, 1):
+        for y in range(0, 15 * grid_size, 1):
+            pt = Vertex((x / float(grid_size), y / float(grid_size)))
             res = is_inside(pt, quad0)
             res2 = is_inside_n2(pt, quad0)
             if res != res2:
@@ -63,14 +66,23 @@ def run_and_plot(poly0, poly1):
     plt.show()
 
 
-def gen_random_convex_poly(number_of_vertices, radius=50.0, x_min=0, x_max=100, y_min=0, y_max=100):
+def gen_random_convex_poly(number_of_vertices,
+                           radius=50.0,
+                           x_min=0,
+                           x_max=100,
+                           y_min=0,
+                           y_max=100):
     """Not truly random. Mostly an observation that yields convex polygons.
     """
-    offsets = sorted([random() * 2.0 * math.pi for i in range(number_of_vertices)])
-    x_offset = x_min + (x_max-x_min)*random()
-    y_offset = y_min + (y_max-y_min)*random()
+    offsets = [random() * 2.0 * math.pi for i in range(number_of_vertices)]
+    offsets.sort()
+    offsets = offsets[::-1]
+    x_offset = x_min + (x_max - x_min) * random()
+    y_offset = y_min + (y_max - y_min) * random()
 
-    return ConvexPolygon([(radius*math.cos(theta) + x_offset, radius*math.sin(theta) + y_offset) for theta in offsets])
+    return ConvexPolygon([(radius * math.cos(theta) + x_offset,
+                           radius * math.sin(theta) + y_offset)
+                          for theta in offsets])
 
 
 class Vertex:
@@ -135,7 +147,7 @@ class PolygonIter:
         return self.index
 
     def get_next_iterator(self):
-        next_iter = PolygonIter(self.polygon, self.index+self.direction)
+        next_iter = PolygonIter(self.polygon, self.index + self.direction)
         next_iter.direction = self.direction
         return next_iter
 
@@ -144,8 +156,7 @@ class PolygonIter:
 
     def _advance(self, skips):
         return_index = self.index + skips
-        if (return_index >= len(self.polygon.vertices) or
-            return_index <= -1):
+        if (return_index >= len(self.polygon.vertices) or return_index <= -1):
             raise IndexError('Cannot advance beyond bounds of corresponding '
                              'polygon vertices container.')
         return return_index
@@ -197,14 +208,14 @@ class Polygon:
         if index <= -1:
             iter_index = -index
             iter_index %= len(self.vertices)
-            return self.get_iterator(index=len(self.vertices)-iter_index)
+            return self.get_iterator(index=len(self.vertices) - iter_index)
         return self.get_iterator(index=index % len(self.vertices))
 
     def get_front_iterator(self):
         return self.get_iterator(index=0)
 
     def get_back_iterator(self):
-        return self.get_iterator(index=len(self.vertices)-1)
+        return self.get_iterator(index=len(self.vertices) - 1)
 
     def get_vertex_at(self, index):
         return self.vertices[index]
@@ -222,6 +233,7 @@ class Polygon:
         ys = [v.y() for v in self.vertices] + [self.vertices[0].y()]
         mplib_axes.plot(xs, ys, 'o-')
         return mplib_axes
+
 
 class ConvexPolygon(Polygon):
     """This class encapsulates properties convex polygons posess in the
@@ -297,9 +309,11 @@ class ConvexPolygon(Polygon):
         """
         return self._search_vertex(lambda v0, v1: v0.y() < v1.y())
 
+
 # BEGINNING EXTREMELY TERSE FUNCTIONS
 def line_intersect(p0, p1, p2, p3, err=0):
-    lhs = np.array([[p0.y() - p1.y(), p1.x() - p0.x()], [p2.y() - p3.y(), p3.x() - p2.x()]])
+    lhs = np.array([[p0.y() - p1.y(), p1.x() - p0.x()],
+                    [p2.y() - p3.y(), p3.x() - p2.x()]])
     rhs = np.array([
         p0.y() * (p1.x() - p0.x()) - p0.x() * (p1.y() - p0.y()),
         p2.y() * (p3.x() - p2.x()) - p2.x() * (p3.y() - p2.y())
@@ -329,16 +343,16 @@ def line_intersect(p0, p1, p2, p3, err=0):
     return None
 
 
-pt_eq = lambda pt0, pt1: (abs(pt0.x() - pt1.x()) < 1e-9) and (abs(pt0.y() - pt1.y()) <
-                                                          1e-9)
+pt_eq = lambda pt0, pt1: (abs(pt0.x() - pt1.x()) < 1e-9) and (abs(pt0.y() - pt1.
+                                                                  y()) < 1e-9)
 or_op = lambda x, y: x or y
 and_op = lambda x, y: x and y
 pt_vertices = lambda pt, vertices: reduce(
     or_op, [pt_eq(pt, Vertex(v))
             for v in vertices]) if len(vertices) > 0 else False
 # pt is the point to test, v0, v1 are endpoints of the line segment.
-signed_area = lambda pt, v0, v1: ((v0.x() - pt.x()) * (v1.y() - pt.y()) - (v0.y() - pt.y()) *
-                              (v1.x() - pt.x()))
+signed_area = lambda pt, v0, v1: ((v0.x() - pt.x()) * (v1.y() - pt.y()) -
+                                  (v0.y() - pt.y()) * (v1.x() - pt.x()))
 is_left = lambda pt, v0, v1: signed_area(pt, v0, v1) <= 0
 is_inside_n2 = lambda pt, poly: reduce(and_op, [
     is_left(pt, poly.vertices[i - 1], poly.vertices[i])
@@ -371,8 +385,8 @@ def is_inside(point, polygon, log=False):
     offset = -bottom.index
     start_bottom = bottom.index + offset
     if top.index + offset < 0:
-        end_top = len(polygon.vertices) - (
-                  -(top.index + offset) % len(polygon.vertices))
+        end_top = len(
+            polygon.vertices) - (-(top.index + offset) % len(polygon.vertices))
     else:
         end_top = top.index + offset
     comparator = lambda v0, v1: v1.y() > v0.y()
@@ -380,15 +394,15 @@ def is_inside(point, polygon, log=False):
 
     # Find polygon line segment that intersects a horizontal line that passes
     # through the point from the left side of the polygon.
-    lhs_tail = get_segment_tail(point, polygon, comparator,
-                                start_bottom, end_top, offset)
+    lhs_tail = get_segment_tail(point, polygon, comparator, start_bottom,
+                                end_top, offset)
 
     # Condition input before next stage.
     offset = -top.index
     start_top = top.index + offset
     if bottom.index + offset < 0:
-        end_bottom = len(polygon.vertices) - (
-                  -(bottom.index + offset) % len(polygon.vertices))
+        end_bottom = len(polygon.vertices) - (-(bottom.index + offset) %
+                                              len(polygon.vertices))
     else:
         end_bottom = bottom.index + offset
     comparator = lambda v0, v1: v1.y() < v0.y()
@@ -412,13 +426,13 @@ def get_segment_tail(point, polygon, comparator, start, end, offset):
     polygon vertex list.
     """
     # Permit access to the vertex data.
-    start_iter = polygon.get_iterator_wrapped_in_bounds(start+offset)
-    end_iter = polygon.get_iterator_wrapped_in_bounds(end+offset)
+    start_iter = polygon.get_iterator_wrapped_in_bounds(start + offset)
+    end_iter = polygon.get_iterator_wrapped_in_bounds(end + offset)
 
     if start == end:
         return start_iter.get_value()
 
-    if end-start == 1:
+    if end - start == 1:
         if comparator(start_iter.get_value(), end_iter.get_value()):
             return start_iter.get_value()
         return end_iter.get_value()
@@ -454,9 +468,11 @@ def intersect_polys(poly0, poly1, is_inside=is_inside_n2):
 
         tmp_inters = []
         for p1v in poly1.vertices:
-            tmp_inter = line_intersect(poly0v, poly0v.next_vertex(), p1v, p1v.next_vertex())
+            tmp_inter = line_intersect(poly0v, poly0v.next_vertex(), p1v,
+                                       p1v.next_vertex())
             if tmp_inter is not None:
-                tmp_inters.append((tmp_inter[0], tmp_inter[1], p1v.next_vertex()))
+                tmp_inters.append(
+                    (tmp_inter[0], tmp_inter[1], p1v.next_vertex()))
 
         # sort by euclidean distance from poly0v
         tmp_inters = sorted(tmp_inters,
