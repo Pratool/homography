@@ -160,10 +160,13 @@ cv::Mat stitchImages(const cv::Mat &sourceImage, const cv::Mat &targetImage)
                 targetKeyPoints[match.queryIdx].pt));
     }
 
-    std::clog << "inliers to total: "
-              << matches.size() << "/" << sourceKeyPoints.size()
-              << " = " << matches.size()/double(sourceKeyPoints.size())
-              << std::endl;
+    std::clog << matches.size() << '/' << sourceKeyPoints.size()
+              << " = "
+              << std::setprecision(2)
+              <<   static_cast<double>(matches.size())
+                 / static_cast<double>(sourceKeyPoints.size())
+                 * static_cast<double>(100)
+              << "% inliers" << std::endl;
 
     auto eigenHomography = pcv::Ransac<std::pair<cv::Point2f, cv::Point2f>, Eigen::Matrix3d>(
         correspondences,
