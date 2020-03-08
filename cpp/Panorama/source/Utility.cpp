@@ -133,26 +133,21 @@ cv::Mat stitchImages(const cv::Mat &sourceImage, const cv::Mat &targetImage)
         }
     }
 
-
-    // Get the pixel coordinates of each of the matches.
-    std::vector<cv::Point2f> sourceRansacInliers;
-    std::vector<cv::Point2f> targetRansacInliers;
+    // Create a vector of correspondences between the source and target points.
+    std::vector<std::pair<cv::Point2f, cv::Point2f>> correspondences;
     for (const auto &match : matches)
     {
-        targetRansacInliers.push_back(targetKeyPoints[match.queryIdx].pt);
-        sourceRansacInliers.push_back(sourceKeyPoints[match.trainIdx].pt);
+        // Get the pixel coordinates of each of the matches.
+        correspondences.emplace_back(
+            std::make_pair(
+                sourceKeyPoints[match.trainIdx].pt,
+                targetKeyPoints[match.queryIdx].pt));
     }
 
     std::clog << "inliers to total: "
               << matches.size() << "/" << sourceKeyPoints.size()
               << " = " << matches.size()/double(sourceKeyPoints.size())
               << std::endl;
-
-    std::vector<std::pair<cv::Point2f, cv::Point2f>> correspondences;
-    for (std::size_t i = 0; i < sourceRansacInliers.size(); ++i)
-    {
-        correspondences.push_back({sourceRansacInliers[i], targetRansacInliers[i]});
-    }
 
     auto eigenHomography = pcv::Ransac<std::pair<cv::Point2f, cv::Point2f>, Eigen::Matrix3d>(
         correspondences,
@@ -179,15 +174,12 @@ cv::Mat stitchImages(const cv::Mat &sourceImage, const cv::Mat &targetImage)
     homography = cv::Mat(targetFrameHomography*homography);
 
     const auto newSize = cv::Size(
-        warpBounds.size.width + warpBounds.minWidth > targetImage.size().width ?
-            warpBounds.size.width
-                :
-            targetImage.size().width-warpBounds.minWidth,
-
-        warpBounds.size.height + warpBounds.minHeight > targetImage.size().height ?
-            warpBounds.size.height
-                :
-            targetImage.size().height-warpBounds.minHeight);
+        warpBounds.size.width + warpBounds.minWidth > targetImage.size().width
+            ? warpBounds.size.width
+            : targetImage.size().width-warpBounds.minWidth,
+        warpBounds.size.height + warpBounds.minHeight > targetImage.size().height
+            ? warpBounds.size.height
+            : targetImage.size().height-warpBounds.minHeight);
 
     cv::Mat sourceWarped;
     cv::warpPerspective(sourceImage, sourceWarped, homography, newSize);
@@ -213,7 +205,7 @@ cv::Mat stitchImages(const cv::Mat &sourceImage, const cv::Mat &targetImage)
         cv::Vec3d(targetImage.size().width, targetImage.size().height, 1),
         cv::Vec3d(targetImage.size().width, 0, 1)});
 
-    for (auto &corner : corners0)
+    for (const auto &corner : corners0)
     {
         const auto tmpCorner = cv::Mat(homography * corner);
         const auto &z = tmpCorner.at<double>(0, 2);
@@ -221,7 +213,7 @@ cv::Mat stitchImages(const cv::Mat &sourceImage, const cv::Mat &targetImage)
                                  static_cast<int>(tmpCorner.at<double>(0, 1)/z));
         poly0.addVertex(tmpPoint);
     }
-    for (auto &corner : corners1)
+    for (const auto &corner : corners1)
     {
         const auto tmpCorner = cv::Mat(targetFrameHomography * corner);
         const auto &z = tmpCorner.at<double>(0, 2);
