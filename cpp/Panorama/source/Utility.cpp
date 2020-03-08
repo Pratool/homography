@@ -22,8 +22,7 @@
 struct WarpBounds
 {
     cv::Size size{0, 0};
-    double minWidth;
-    double minHeight;
+    cv::Mat targetFrameHomography;
 };
 
 cv::Mat eigenToCv(const Eigen::Matrix3d &rhs)
@@ -37,6 +36,7 @@ cv::Mat eigenToCv(const Eigen::Matrix3d &rhs)
 }
 
 WarpBounds getWarpedBounds(const cv::Size &sourceImageSize,
+                           const cv::Size &targetImageSize,
                            const cv::Mat &homography)
 {
     // Set the output of sourceWarped to be the max height and max width of the
@@ -76,11 +76,27 @@ WarpBounds getWarpedBounds(const cv::Size &sourceImageSize,
         maxHeight = std::max(tmpPoint.y, maxHeight);
     }
 
-    return WarpBounds{
-        cv::Size{static_cast<int>(maxWidth-minWidth),
-                 static_cast<int>(maxHeight-minHeight)},
-        minWidth,
-        minHeight};
+    auto width = static_cast<int>(maxWidth-minWidth);
+    auto height = static_cast<int>(maxHeight-minHeight);
+
+    // In case the target image would be outside the frame after applying the
+    // minWidth and minHeight translation: adjust the emitted size to entirely
+    // bound the target image.
+    auto newSize = cv::Size(
+        width + minWidth > targetImageSize.width
+            ? width
+            : targetImageSize.width - minWidth,
+        height + minHeight > targetImageSize.height
+            ? height
+            : targetImageSize.height - minHeight);
+
+    // Translate the warped source by an amount to get its edges
+    // to line up with the bounds of the image frame, which must be 0.
+    cv::Mat targetFrameHomography = cv::Mat::eye(3, 3, CV_64F);
+    targetFrameHomography.at<double>(0, 2) -= minWidth;
+    targetFrameHomography.at<double>(1, 2) -= minHeight;
+
+    return WarpBounds{newSize, targetFrameHomography};
 }
 
 cv::Mat stitchImages(const cv::Mat &sourceImage, const cv::Mat &targetImage)
@@ -161,30 +177,17 @@ cv::Mat stitchImages(const cv::Mat &sourceImage, const cv::Mat &targetImage)
 
     // Find the bounds and translation vector necessary to align the sourceImage
     // into the targetImage frame.
-    WarpBounds warpBounds = getWarpedBounds(sourceImage.size(), homography);
-
-    // Translate the warped source by an amount to get its edges
-    // to line up with the bounds of the image frame, which must be 0.
-    cv::Mat targetFrameHomography = cv::Mat::eye(3, 3, CV_64F);
-    targetFrameHomography.at<double>(0, 2) -= warpBounds.minWidth;
-    targetFrameHomography.at<double>(1, 2) -= warpBounds.minHeight;
+    WarpBounds warpBounds = getWarpedBounds(
+            sourceImage.size(), targetImage.size(), homography);
 
     // Apply translation transform (captured by targetFrameHomography) AFTER
     // applying projective transformation i.e. order of operations here matter.
-    homography = cv::Mat(targetFrameHomography*homography);
-
-    const auto newSize = cv::Size(
-        warpBounds.size.width + warpBounds.minWidth > targetImage.size().width
-            ? warpBounds.size.width
-            : targetImage.size().width-warpBounds.minWidth,
-        warpBounds.size.height + warpBounds.minHeight > targetImage.size().height
-            ? warpBounds.size.height
-            : targetImage.size().height-warpBounds.minHeight);
+    homography = cv::Mat(warpBounds.targetFrameHomography*homography);
 
     cv::Mat sourceWarped;
-    cv::warpPerspective(sourceImage, sourceWarped, homography, newSize);
+    cv::warpPerspective(sourceImage, sourceWarped, homography, warpBounds.size);
     cv::Mat targetWarped;
-    cv::warpPerspective(targetImage, targetWarped, targetFrameHomography, newSize);
+    cv::warpPerspective(targetImage, targetWarped, warpBounds.targetFrameHomography, warpBounds.size);
 
     cv::Mat dst;
     cv::addWeighted(sourceWarped, 0.5, targetWarped, 0.5, 0.0, dst);
@@ -209,17 +212,16 @@ cv::Mat stitchImages(const cv::Mat &sourceImage, const cv::Mat &targetImage)
     {
         const auto tmpCorner = cv::Mat(homography * corner);
         const auto &z = tmpCorner.at<double>(0, 2);
-        Eigen::Vector2i tmpPoint(static_cast<int>(tmpCorner.at<double>(0, 0)/z),
-                                 static_cast<int>(tmpCorner.at<double>(0, 1)/z));
-        poly0.addVertex(tmpPoint);
+        poly0.addVertex({static_cast<int>(tmpCorner.at<double>(0, 0)/z),
+                         static_cast<int>(tmpCorner.at<double>(0, 1)/z)});
     }
+
     for (const auto &corner : corners1)
     {
-        const auto tmpCorner = cv::Mat(targetFrameHomography * corner);
+        const auto tmpCorner = cv::Mat(warpBounds.targetFrameHomography * corner);
         const auto &z = tmpCorner.at<double>(0, 2);
-        Eigen::Vector2i tmpPoint(static_cast<int>(tmpCorner.at<double>(0, 0)/z),
-                                 static_cast<int>(tmpCorner.at<double>(0, 1)/z));
-        poly1.addVertex(tmpPoint);
+        poly1.addVertex({static_cast<int>(tmpCorner.at<double>(0, 0)/z),
+                         static_cast<int>(tmpCorner.at<double>(0, 1)/z)});
     }
 
     std::vector<pcv::ConvexPolygon<int>> polys({poly0, poly1});
