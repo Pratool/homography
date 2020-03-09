@@ -153,6 +153,62 @@ class Polygon:
         mplib_axes.plot(xs, ys, 'o-')
         return mplib_axes
 
+    def _search_vertex(self, comparator, start=0, end=None):
+        """Retrieve a vertex that is the "most" of a property that can be
+        extracted per vertex with the comparator. Will use start and end as
+        index values and search in the interval [start, end].
+
+        Args:
+            self: Polygon in question.
+            comparator: Function that compares two vertices to create a strict
+                        lexical ordering. Must return a boolean value.
+            start: Index into vertex array to begin search.
+            end: Index into vertex array to end search.
+
+        Returns:
+            Polygon iterator to vertex within vertex array.
+        """
+        if end is None:
+            end = start + len(self.vertices) - 1
+
+        largest_lexical_value = self.get_iterator(index=start)
+
+        for index in range(start, end):
+            if comparator(self.vertices[index], largest_lexical_value.get_value()):
+                largest_lexical_value = self.get_iterator(index=index)
+
+        return largest_lexical_value
+
+    def get_top_vertex(self):
+        """Retrieve vertex with the max y-value of all vertices in polygon.
+        Will use start and end as index values and search in the interval
+        [start, end].
+
+        Args:
+            self: Polygon in question.
+            start: Index into vertex array to begin search.
+            end: Index into vertex array to end search.
+
+        Returns:
+            Polygon iterator to vertex within vertex array.
+        """
+        return self._search_vertex(lambda v0, v1: v0.y() > v1.y())
+
+    def get_bottom_vertex(self):
+        """Retrieve vertex with the min y-value of all vertices in polygon.
+        Will use start and end as index values and search in the interval
+        [start, end].
+
+        Args:
+            self: Polygon in question.
+            start: Index into vertex array to begin search.
+            end: Index into vertex array to end search.
+
+        Returns:
+            Polygon iterator to vertex within vertex array.
+        """
+        return self._search_vertex(lambda v0, v1: v0.y() < v1.y())
+
 
 class ConvexPolygon(Polygon):
     """This class encapsulates properties convex polygons posess in the
@@ -197,33 +253,3 @@ class ConvexPolygon(Polygon):
             return self._search_vertex(comparator, start=start, end=mid - 1)
         else:
             return self.get_iterator(index=mid)
-
-    def get_top_vertex(self):
-        """Retrieve vertex with the max y-value of all vertices in polygon.
-        Will use start and end as index values and search in the interval
-        [start, end].
-
-        Args:
-            self: Polygon in question.
-            start: Index into vertex array to begin search.
-            end: Index into vertex array to end search.
-
-        Returns:
-            Polygon iterator to vertex within vertex array.
-        """
-        return self._search_vertex(lambda v0, v1: v0.y() > v1.y())
-
-    def get_bottom_vertex(self):
-        """Retrieve vertex with the min y-value of all vertices in polygon.
-        Will use start and end as index values and search in the interval
-        [start, end].
-
-        Args:
-            self: Polygon in question.
-            start: Index into vertex array to begin search.
-            end: Index into vertex array to end search.
-
-        Returns:
-            Polygon iterator to vertex within vertex array.
-        """
-        return self._search_vertex(lambda v0, v1: v0.y() < v1.y())
