@@ -5,14 +5,15 @@
 
 import json
 import math
+import sys
 import unittest
 
 from matplotlib import pyplot as plt
 
 from Polygon import *
 
-def main():
-    with open('concaveSet00.json', 'r') as f:
+def main(set_file):
+    with open(set_file, 'r') as f:
         concave_set = json.load(f)
     concave_set = [tuple(point) for point in concave_set]
 
@@ -37,13 +38,13 @@ def _plot_set(mplib_axes, point_set):
 
 
 class Subpoint:
-    def __init__(self, point, distance):
+    def __init__(self, point, metric):
         self.point = point
-        self.distance = distance
+        self.metric = metric
 
 
     def __repr__(self):
-        return (self.distance, self.point).__repr__()
+        return (self.metric, self.point).__repr__()
 
 
 def create_concave_poly(point_set, k):
@@ -92,7 +93,7 @@ def create_knn_graph(point_set, k):
             distance = euclidean_distance(point, linked_point)
             for i in range(k):
                 if (len(graph[point]) < i + 1 or
-                    distance < graph[point][i].distance):
+                    distance < graph[point][i].metric):
                     graph[point].insert(i, Subpoint(linked_point, distance))
                     break
         graph[point] = graph[point][1:k+1]
@@ -119,4 +120,4 @@ class TestEuclideanDistance(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    main()
+    main(*sys.argv[1:])
