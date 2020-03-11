@@ -17,7 +17,7 @@ def main(set_file):
         concave_set = json.load(f)
     concave_set = [tuple(point) for point in concave_set]
 
-    concave_poly = create_concave_poly(concave_set, 5)
+    concave_poly = create_concave_poly(concave_set, 5, viz=default_visualizer)
 
     axes = plt.gca()
     _plot_set(axes, concave_set)
@@ -37,6 +37,17 @@ def _plot_set(mplib_axes, point_set):
     return mplib_axes
 
 
+def _plot_knn_graph_node(mplib_axes, point, subpoint):
+    """Plot point, subpoints, edges to subpoints, and values associated with
+    each subpoint (plotted along edge).
+    """
+    average = lambda x: (x[0]+x[1])/2.0
+    xs = (subpoint.point[0], point[0])
+    ys = (subpoint.point[1], point[1])
+    mplib_axes.plot(xs, ys, '-o')
+    mplib_axes.text(average(xs), average(ys), '{:.1f}'.format(subpoint.metric))
+
+
 class Subpoint:
     def __init__(self, point, metric):
         self.point = point
@@ -47,7 +58,19 @@ class Subpoint:
         return (self.metric, self.point).__repr__()
 
 
-def create_concave_poly(point_set, k):
+def default_visualizer(function, *args, **kwargs):
+    """Wrapper to run expensive visualization.
+    """
+    return function(*args, **kwargs)
+
+
+def no_visualizer(function, *args, **kwargs):
+    """Wrapper to not run expensive visualization.
+    """
+    return None
+
+
+def create_concave_poly(point_set, k, viz=no_visualizer):
     # Sort 2D points by y-value
     point_set.sort(key=lambda x: x[1])
 
@@ -57,6 +80,9 @@ def create_concave_poly(point_set, k):
     current_point = point_set[0]
     prev_point = (current_point[0]+1, current_point[1])
     while len(vertices) <= 1 or vertices[0] != current_point:
+        axes = viz(plt.gca)
+        viz(_plot_set, axes, vertices)
+
         linked_points = knn_graph[current_point]
         rightmost_neighbor = None
         for neighbor in linked_points:
@@ -66,8 +92,14 @@ def create_concave_poly(point_set, k):
             if rightmost_neighbor is None:
                 rightmost_neighbor = neighbor.point
 
-            if signed_area(neighbor.point, current_point, rightmost_neighbor) < 0:
+            neighbor.metric = signed_area(neighbor.point, current_point, rightmost_neighbor)
+
+            if neighbor.metric < 0:
                 rightmost_neighbor = neighbor.point
+
+            viz(_plot_knn_graph_node, axes, current_point, neighbor)
+
+        viz(plt.show)
 
         vertices.append(current_point)
         if rightmost_neighbor is None:
