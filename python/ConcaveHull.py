@@ -70,7 +70,12 @@ def no_visualizer(function, *args, **kwargs):
     return None
 
 
-def create_concave_poly(point_set, k, viz=no_visualizer):
+def signed_area_cost(eval_point, point, best_point):
+    return signed_area(eval_point, point, best_point)
+
+
+# TODO: Add Swinging-Arm cost function
+def create_concave_poly(point_set, k, calculate_cost=signed_area_cost, viz=no_visualizer):
     # Sort 2D points by y-value
     point_set.sort(key=lambda x: x[1])
 
@@ -92,7 +97,7 @@ def create_concave_poly(point_set, k, viz=no_visualizer):
             if rightmost_neighbor is None:
                 rightmost_neighbor = neighbor.point
 
-            neighbor.metric = signed_area(neighbor.point, current_point, rightmost_neighbor)
+            neighbor.metric = calculate_cost(neighbor.point, current_point, rightmost_neighbor, prev_point)
 
             if neighbor.metric < 0:
                 rightmost_neighbor = neighbor.point
