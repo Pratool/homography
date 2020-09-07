@@ -69,6 +69,30 @@ externalproject_add(CeresSolverExternalProject
 add_dependencies(CeresSolverExternalProject GlogExternalProject Eigen3ExternalProject)
 
 
+externalproject_add(PythonExternalProject
+    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/python
+    URL "https://github.com/python/cpython/archive/v3.8.5.zip"
+    URL_HASH SHA256=505cf91db10dccbccc4b158c208d0c729b05aa60aa6e82c27f1c1bf2b053cef2
+    DOWNLOAD_NO_PROGRESS ON
+    CONFIGURE_COMMAND <SOURCE_DIR>/configure
+        --prefix=${CMAKE_INSTALL_PREFIX}
+        --enable-shared
+        --enable-optimizations
+        --enable-loadable-sqlite-extensions
+        --disable-ipv6
+        --enable-big-digits=30
+        --with-lto
+        --with-system-expat
+        --with-system-ffi
+        --with-system-libmpdec
+        --with-signal-module
+        --with-threads
+        --with-pymalloc
+        --with-fpectl
+        --with-computed-gotos
+        --with-ensurepip=upgrade)
+
+
 externalproject_add(BoostExternalProject
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/boost
     URL "https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.bz2"
@@ -87,3 +111,5 @@ externalproject_add(BoostExternalProject
         variant=release
         runtime-link=shared
     INSTALL_COMMAND "")
+
+add_dependencies(BoostExternalProject PythonExternalProject)
