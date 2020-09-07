@@ -24,8 +24,8 @@ externalproject_add(OpenCVExternalProject
 
 externalproject_add(Eigen3ExternalProject
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/eigen3
-    URL "http://bitbucket.org/eigen/eigen/get/3.3.7.zip"
-    URL_HASH SHA256=d34985c7b4283519c032e3585b30846644f56c81acba35693295ff8930f080aa
+    URL "https://gitlab.com/libeigen/eigen/-/archive/3.3.7/eigen-3.3.7.zip"
+    URL_HASH SHA256=e09b89aae054e9778ee3f606192ee76d645eec82c402c01c648b1fe46b6b9857
     DOWNLOAD_NO_PROGRESS ON
     CMAKE_ARGS
         -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
