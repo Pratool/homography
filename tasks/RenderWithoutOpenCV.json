@@ -1,0 +1,10 @@
+{
+  "short": "render image without opencv",
+  "type": "milestone",
+  "requires": [
+    "EigenToPng"
+  ],
+  "optional": [
+    "EigenToJpeg"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "short": "create function that converts an eigen matrix to a jpeg file",
+  "requires": [
+    "BuildBoostGIL",
+    "CreateRenderLib"
+  ]
+}
