@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.8.2)
 
+find_package(Boost REQUIRED COMPONENTS filesystem)
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV 4.1 REQUIRED)
 
@@ -14,6 +15,7 @@ target_include_directories(Image
         ${CMAKE_CURRENT_SOURCE_DIR}/source)
 
 target_link_libraries(Image
+    Boost::filesystem
     ${OpenCV_LIBS}
     Eigen3::Eigen
     Geometry)

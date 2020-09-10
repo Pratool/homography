@@ -13,7 +13,7 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/opencv.hpp>
 
-#include <filesystem>
+#include <boost/filesystem.hpp>
 
 namespace pcv
 {
@@ -33,7 +33,7 @@ public:
      * Construct with a path to an image. Will read in data, using appropriate
      * codec, into a matrix that can later be accessed directly, if necessary.
      */
-    explicit Image(const std::filesystem::path &imagePath);
+    explicit Image(const boost::filesystem::path &imagePath);
 
     /**
      * Prevent a deep copy default constructor to prevent excessive copying.
@@ -54,7 +54,7 @@ public:
      * Writes the image to a file using a specified codec. Right now the output
      * file type is specified by the file name extension.
      */
-    void write(const std::filesystem::path &savePath);
+    void write(const boost::filesystem::path &savePath);
 
     /**
      * Crop the image to any polygon specified while retaining the original
@@ -89,7 +89,7 @@ private:
 
 template<class BitDepth, std::size_t ChannelNumber>
 inline Image<BitDepth, ChannelNumber>::Image(
-    const std::filesystem::path &imagePath)
+    const boost::filesystem::path &imagePath)
 {
     cv::Mat cvBuffer = cv::imread(imagePath.native(), 1);
 
@@ -112,7 +112,7 @@ inline Image<BitDepth, ChannelNumber>::Image(
 
 template<class BitDepth, std::size_t ChannelNumber>
 inline void Image<BitDepth, ChannelNumber>::write(
-    const std::filesystem::path &savePath)
+    const boost::filesystem::path &savePath)
 {
     std::array<cv::Mat, ChannelNumber> channels;
     std::transform(
