@@ -2,7 +2,6 @@
 #include <Solvers/Line.hpp>
 #include <Solvers/Ransac.hpp>
 
-#include <ceres/ceres.h>
 #include <gtest/gtest.h>
 
 #include <cmath>
