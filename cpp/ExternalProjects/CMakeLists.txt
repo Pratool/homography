@@ -95,7 +95,7 @@ externalproject_add(PythonExternalProject
 
 externalproject_add(BoostExternalProject
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/boost
-    URL "https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.bz2"
+    URL "https://boostorg.jfrog.io/artifactory/main/release/1.72.0/source/boost_1_72_0.tar.bz2"
     URL_HASH SHA256=59c9b274bc451cf91a9ba1dd2c7fdcaf5d60b1b3aa83f2c9fa143417cc660722
     DOWNLOAD_NO_PROGRESS ON
     BUILD_IN_SOURCE ON
@@ -108,6 +108,11 @@ externalproject_add(BoostExternalProject
         --with-python=python3
     BUILD_COMMAND ./b2 install
         --prefix=${CMAKE_INSTALL_PREFIX}
+		--with-filesystem
+		--with-headers
+		--with-iostreams
+		--with-program_options
+		--with-system
         variant=release
         runtime-link=shared
     INSTALL_COMMAND "")
