@@ -1,0 +1,14 @@
+cmake_minimum_required(VERSION 3.8.2)
+
+find_package(Eigen3 REQUIRED)
+find_package(Boost REQUIRED)
+
+add_executable(imageWriter
+    source/main.cpp)
+
+target_link_libraries(imageWriter
+    Boost::boost
+    Eigen3::Eigen)
+
+install(TARGETS imageWriter
+        DESTINATION bin)
