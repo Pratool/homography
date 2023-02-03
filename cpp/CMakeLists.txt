@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.8.2)
 
 project(Vision)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 17)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -17,4 +18,5 @@ add_subdirectory(CameraCalibration)
 add_subdirectory(Geometry)
 add_subdirectory(Image)
 add_subdirectory(Panorama)
+add_subdirectory(Samples)
 add_subdirectory(Solvers)
