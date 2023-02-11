@@ -4,13 +4,15 @@ find_package(Eigen3 REQUIRED)
 find_package(Boost REQUIRED)
 find_package(PNG REQUIRED)
 
-add_executable(imageWriter
-    source/main.cpp)
+add_executable(generateGradient source/generateGradient.cpp)
 
-target_link_libraries(imageWriter
-    Boost::boost
-    Eigen3::Eigen
-    PNG::PNG)
+target_link_libraries(generateGradient
+  Boost::boost
+  Eigen3::Eigen
+  PNG::PNG
+)
 
-install(TARGETS imageWriter
-        DESTINATION bin)
+install(
+  TARGETS generateGradient
+  DESTINATION bin
+)
