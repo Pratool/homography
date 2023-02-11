@@ -194,6 +194,8 @@ inline Eigen::Matrix3d transform(const Eigen::Matrix3d &transform)
     // or allocate more memory to this->matrices due to increased bounding box
     // size. Don't need to worry about decreasing memory usage if the image
     // shrinks -- for now.
+    throw std::runtime_error("unimplemented functionality");
+    return transform;
 }
 
 }
