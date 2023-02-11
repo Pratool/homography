@@ -92,6 +92,16 @@ externalproject_add(PythonExternalProject
         --with-computed-gotos
         --with-ensurepip=upgrade)
 
+externalproject_add(ZlibExternalProject
+    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/zlib
+    URL "https://www.zlib.net/zlib-1.2.13.tar.gz"
+    URL_HASH SHA256=b3a24de97a8fdbc835b9833169501030b8977031bcb54b3b3ac13740f846ab30
+    DOWNLOAD_NO_PROGRESS ON
+    CMAKE_ARGS
+        -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+        -DCMAKE_PREFIX_PATH:PATH=${CMAKE_INSTALL_PREFIX}
+        -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX})
+
 externalproject_add(PngExternalProject
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/png
     URL "https://github.com/glennrp/libpng/archive/refs/tags/v1.6.39.tar.gz"
@@ -101,6 +111,7 @@ externalproject_add(PngExternalProject
         -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
         -DCMAKE_PREFIX_PATH:PATH=${CMAKE_INSTALL_PREFIX}
         -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX})
+add_dependencies(PngExternalProject ZlibExternalProject)
 
 externalproject_add(BoostExternalProject
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/boost
