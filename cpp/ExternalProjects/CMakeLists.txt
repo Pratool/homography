@@ -92,6 +92,15 @@ externalproject_add(PythonExternalProject
         --with-computed-gotos
         --with-ensurepip=upgrade)
 
+externalproject_add(PngExternalProject
+    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/png
+    URL "https://github.com/glennrp/libpng/archive/refs/tags/v1.6.39.tar.gz"
+    URL_HASH SHA256=a00e9d2f2f664186e4202db9299397f851aea71b36a35e74910b8820e380d441
+    DOWNLOAD_NO_PROGRESS ON
+    CMAKE_ARGS
+        -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+        -DCMAKE_PREFIX_PATH:PATH=${CMAKE_INSTALL_PREFIX}
+        -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX})
 
 externalproject_add(BoostExternalProject
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/boost
@@ -118,3 +127,4 @@ externalproject_add(BoostExternalProject
     INSTALL_COMMAND "")
 
 add_dependencies(BoostExternalProject PythonExternalProject)
+add_dependencies(BoostExternalProject PngExternalProject)
