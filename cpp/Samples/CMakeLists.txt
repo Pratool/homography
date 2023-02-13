@@ -12,7 +12,17 @@ target_link_libraries(generateGradient
   PNG::PNG
 )
 
+add_executable(sobel source/sobel.cpp)
+
+target_link_libraries(sobel
+  Boost::boost
+  Eigen3::Eigen
+  PNG::PNG
+)
+
 install(
-  TARGETS generateGradient
+  TARGETS
+    generateGradient
+    sobel
   DESTINATION bin
 )
