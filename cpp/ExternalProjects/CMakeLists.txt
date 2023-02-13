@@ -17,6 +17,7 @@ externalproject_add(OpenCVExternalProject
     CMAKE_ARGS
         -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
         -DCMAKE_PREFIX_PATH:PATH=${CMAKE_INSTALL_PREFIX}
+        -DCMAKE_INSTALL_RPATH:PATH=$ORIGIN:$ORIGIN/../lib
         -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
         -DWITH_VTK:BOOL=ON
         -DWITH_NVCUVID:BOOL=OFF)
@@ -30,6 +31,7 @@ externalproject_add(Eigen3ExternalProject
     CMAKE_ARGS
         -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
         -DCMAKE_PREFIX_PATH:PATH=${CMAKE_INSTALL_PREFIX}
+        -DCMAKE_INSTALL_RPATH:PATH=$ORIGIN:$ORIGIN/../lib
         -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX})
 
 
@@ -41,6 +43,7 @@ externalproject_add(GoogleTestExternalProject
     CMAKE_ARGS
         -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
         -DCMAKE_PREFIX_PATH:PATH=${CMAKE_INSTALL_PREFIX}
+        -DCMAKE_INSTALL_RPATH:PATH=$ORIGIN:$ORIGIN/../lib
         -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX})
 
 
@@ -52,6 +55,7 @@ externalproject_add(GlogExternalProject
     CMAKE_ARGS
         -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
         -DCMAKE_PREFIX_PATH:PATH=${CMAKE_INSTALL_PREFIX}
+        -DCMAKE_INSTALL_RPATH:PATH=$ORIGIN:$ORIGIN/../lib
         -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
         -DBUILD_SHARED_LIBS:BOOL=ON)
 
@@ -64,6 +68,7 @@ externalproject_add(CeresSolverExternalProject
     CMAKE_ARGS
         -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
         -DCMAKE_PREFIX_PATH:PATH=${CMAKE_INSTALL_PREFIX}
+        -DCMAKE_INSTALL_RPATH:PATH=$ORIGIN:$ORIGIN/../lib
         -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX})
 
 add_dependencies(CeresSolverExternalProject GlogExternalProject Eigen3ExternalProject)
@@ -100,6 +105,7 @@ externalproject_add(ZlibExternalProject
     CMAKE_ARGS
         -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
         -DCMAKE_PREFIX_PATH:PATH=${CMAKE_INSTALL_PREFIX}
+        -DCMAKE_INSTALL_RPATH:PATH=$ORIGIN:$ORIGIN/../lib
         -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX})
 
 externalproject_add(PngExternalProject
@@ -110,6 +116,7 @@ externalproject_add(PngExternalProject
     CMAKE_ARGS
         -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
         -DCMAKE_PREFIX_PATH:PATH=${CMAKE_INSTALL_PREFIX}
+        -DCMAKE_INSTALL_RPATH:PATH=$ORIGIN:$ORIGIN/../lib
         -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX})
 add_dependencies(PngExternalProject ZlibExternalProject)
 
@@ -127,6 +134,8 @@ externalproject_add(BoostExternalProject
         --with-python-root=${CMAKE_INSTALL_PREFIX}
         --with-python=python3
     BUILD_COMMAND ./b2 install
+        hardcode-dll-paths=true
+        dll-path="'\$ORIGIN/../lib'"
         --prefix=${CMAKE_INSTALL_PREFIX}
 		--with-filesystem
 		--with-headers
