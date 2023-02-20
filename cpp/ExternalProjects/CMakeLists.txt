@@ -9,20 +9,6 @@ project(ExternalProjects)
 
 include(ExternalProject)
 
-externalproject_add(OpenCVExternalProject
-    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/opencv
-    URL "https://github.com/opencv/opencv/archive/4.1.1.zip"
-    URL_HASH SHA256=d34985c7b4283519c032e3585b30846644f56c81acba35693295ff8930f080aa
-    DOWNLOAD_NO_PROGRESS ON
-    CMAKE_ARGS
-        -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
-        -DCMAKE_PREFIX_PATH:PATH=${CMAKE_INSTALL_PREFIX}
-        -DCMAKE_INSTALL_RPATH:PATH=$ORIGIN:$ORIGIN/../lib
-        -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
-        -DWITH_VTK:BOOL=ON
-        -DWITH_NVCUVID:BOOL=OFF)
-
-
 externalproject_add(Eigen3ExternalProject
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/eigen3
     URL "https://gitlab.com/libeigen/eigen/-/archive/3.3.7/eigen-3.3.7.zip"
@@ -96,6 +82,26 @@ externalproject_add(PythonExternalProject
         --with-fpectl
         --with-computed-gotos
         --with-ensurepip=upgrade)
+
+externalproject_add(OpenCVExternalProject
+    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/opencv
+    URL "https://github.com/opencv/opencv/archive/4.1.1.zip"
+    URL_HASH SHA256=d34985c7b4283519c032e3585b30846644f56c81acba35693295ff8930f080aa
+    DOWNLOAD_NO_PROGRESS ON
+    CONFIGURE_COMMAND
+        LD_LIBRARY_PATH=${CMAKE_INSTALL_PREFIX}/lib:$ENV{LD_LIBRARY_PATH}
+        PATH=${CMAKE_INSTALL_PREFIX}/bin:$ENV{PATH}
+        ${CMAKE_COMMAND} <SOURCE_DIR>
+        -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+        -DCMAKE_PREFIX_PATH:PATH=${CMAKE_INSTALL_PREFIX}
+        -DCMAKE_INSTALL_RPATH:PATH=$ORIGIN:$ORIGIN/../lib
+        -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
+        -DBUILD_TESTS:BOOL=OFF
+        -DWITH_VTK:BOOL=ON
+        -DWITH_NVCUVID:BOOL=OFF)
+
+add_dependencies(OpenCVExternalProject PythonExternalProject)
+
 
 externalproject_add(ZlibExternalProject
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/zlib
