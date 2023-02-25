@@ -14,25 +14,21 @@ int main()
 
   rgb8_image_t convolved(img);
 
-  std::array<float, 9> gaussian = {
-    0.075, 0.075, 0.075,
-    0.075, 0.4, 0.075,
-    0.075, 0.075, 0.075 };
+  std::array<float, 3> sobel_x_r = {1.0f, 2.0f, 1.0f};
+  kernel_1d_fixed<float, sobel_x_r.size()> sobel_x_r_kernel(sobel_x_r.begin(), 1);
+  convolve_rows_fixed<rgb32f_pixel_t>(const_view(convolved), sobel_x_r_kernel, view(convolved));
 
-  kernel_2d_fixed<float, 9> guassian_kernel(gaussian.begin(), 1, 1);
-  convolve_rows_fixed<rgb32f_pixel_t>(const_view(convolved), guassian_kernel, view(convolved));
+  std::array<float, 3> sobel_x_c = {1.0f, 0.0f, -1.0f};
+  kernel_1d_fixed<float, sobel_x_c.size()> sobel_x_c_kernel(sobel_x_c.begin(), 1);
+  convolve_rows_fixed<rgb32f_pixel_t>(const_view(convolved), sobel_x_c_kernel, view(convolved));
 
-  /*
-  float sobel_x[] = { 1.0f, 0.0f, -1.0f, 2.0f, 0.0f, -2.0f, 1.0f, 0.0f, -1.0f };
-  kernel_1d_fixed<float, 9> sobel_x_kernel(sobel_x, 4);
-  float sobel_y[] = { 1.0f, 2.0f, 1.0f, 0.0f, 0.0f, 0.0f, -1.0f, -2.0f, -1.0f };
-  kernel_1d_fixed<float, 9> sobel_y_kernel(sobel_y, 4);
-  convolve_cols_fixed<rgb32f_pixel_t>(const_view(convolved), guassian_kernel, view(convolved));
-  convolve_rows_fixed<rgb32f_pixel_t>(const_view(convolved), sobel_x_kernel, view(convolved));
-  convolve_cols_fixed<rgb32f_pixel_t>(const_view(convolved), sobel_y_kernel, view(convolved));
-  */
+  kernel_1d_fixed<float, sobel_x_c.size()> sobel_y_r_kernel(sobel_x_c.begin(), 1);
+  convolve_rows_fixed<rgb32f_pixel_t>(const_view(convolved), sobel_y_r_kernel, view(convolved));
 
-  write_view("test-blur.png", view(convolved), boost::gil::png_tag{});
+  kernel_1d_fixed<float, sobel_x_r.size()> sobel_y_c_kernel(sobel_x_r.begin(), 1);
+  convolve_rows_fixed<rgb32f_pixel_t>(const_view(convolved), sobel_x_c_kernel, view(convolved));
+
+  write_view("test-sobel-filter.png", view(convolved), boost::gil::png_tag{});
 
   return 0;
 }
